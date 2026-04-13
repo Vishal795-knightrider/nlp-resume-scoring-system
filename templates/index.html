@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resume Fitness Scorer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131c;
+      --card: #1a1a27;
+      --border: #2a2a3d;
+      --accent: #6c63ff;
+      --accent2: #00d4aa;
+      --accent3: #ff6584;
+      --text: #e8e8f0;
+      --muted: #7a7a9a;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Outfit', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.3;
+    }
+
+    .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Header */
+    header { text-align: center; padding: 3rem 0 2rem; }
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--accent2);
+      background: rgba(0,212,170,0.1);
+      border: 1px solid rgba(0,212,170,0.3);
+      border-radius: 20px;
+      padding: 0.3rem 0.9rem;
+      margin-bottom: 1.2rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      margin-top: 0.8rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+      font-weight: 300;
+    }
+
+    /* Samples bar */
+    .samples-bar {
+      display: flex; align-items: center; gap: 0.6rem;
+      flex-wrap: wrap; justify-content: center;
+      margin: 1.8rem 0 1.2rem;
+    }
+    .samples-bar span { color: var(--muted); font-size: 0.85rem; font-family: var(--mono); }
+    .sample-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sample-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Main grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-top: 1rem;
+    }
+    @media(max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+    }
+    .panel-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .panel-label::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    textarea {
+      width: 100%; height: 260px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      padding: 1rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+
+    /* Analyze button */
+    .cta-row { text-align: center; margin: 1.4rem 0; }
+    #analyzeBtn {
+      background: linear-gradient(135deg, var(--accent), #8b84ff);
+      border: none;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 0.85rem 2.8rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(108,99,255,0.35);
+    }
+    #analyzeBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,99,255,0.5); }
+    #analyzeBtn:active { transform: translateY(0); }
+    #analyzeBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Results */
+    #results { display: none; }
+    .score-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      position: relative; overflow: hidden;
+    }
+    .score-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .score-number {
+      font-size: clamp(3rem, 8vw, 5rem);
+      font-weight: 900;
+      font-family: var(--mono);
+      line-height: 1;
+    }
+    .score-label { color: var(--muted); margin-top: 0.3rem; font-size: 0.9rem; }
+    .grade-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0.4rem 1.2rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+    }
+
+    .grade-A { background: rgba(0,212,170,0.15); color: var(--accent2); border: 1px solid rgba(0,212,170,0.3); }
+    .grade-B { background: rgba(108,99,255,0.15); color: var(--accent); border: 1px solid rgba(108,99,255,0.3); }
+    .grade-C { background: rgba(255,200,80,0.15); color: #ffc850; border: 1px solid rgba(255,200,80,0.3); }
+    .grade-D { background: rgba(255,150,50,0.15); color: #ff9632; border: 1px solid rgba(255,150,50,0.3); }
+    .grade-F { background: rgba(255,101,132,0.15); color: var(--accent3); border: 1px solid rgba(255,101,132,0.3); }
+
+    /* Score bar */
+    .bar-wrap { background: var(--surface); border-radius: 999px; height: 10px; margin-top: 1.4rem; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s cubic-bezier(.16,1,.3,1); width: 0%; }
+
+    /* Keywords */
+    .kw-panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.4rem;
+    }
+    .kw-title {
+      font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em;
+      color: var(--accent2); margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .kw-title::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); }
+    .keywords { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .kw-tag {
+      font-family: var(--mono); font-size: 0.75rem;
+      background: rgba(108,99,255,0.12);
+      border: 1px solid rgba(108,99,255,0.25);
+      color: #a8a3ff;
+      padding: 0.3rem 0.75rem;
+      border-radius: 5px;
+    }
+    .kw-tag:nth-child(-n+3) { background: rgba(0,212,170,0.12); border-color: rgba(0,212,170,0.25); color: var(--accent2); }
+
+    /* Stats row */
+    .stats { display: flex; gap: 1rem; margin-bottom: 1.2rem; }
+    .stat-box {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.1rem; text-align: center;
+    }
+    .stat-val { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .stat-key { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* Error */
+    .error-msg {
+      background: rgba(255,101,132,0.1);
+      border: 1px solid rgba(255,101,132,0.3);
+      color: var(--accent3);
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    /* Explanation section */
+    .explainer {
+      margin-top: 3rem;
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
+    }
+    .explainer h2 {
+      font-size: 1.3rem; font-weight: 700; margin-bottom: 1.2rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .exp-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem;
+    }
+    .exp-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
+    .exp-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent); }
+    .exp-card p { font-size: 0.84rem; color: var(--muted); line-height: 1.6; }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      color: var(--muted); font-size: 0.8rem; font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="badge">ML COLLEGE PROJECT</div>
+    <h1>Resume Fitness<br/>Scoring System</h1>
+    <p class="subtitle">TF-IDF · Cosine Similarity · Keyword Matching</p>
+  </header>
+
+  <div class="samples-bar">
+    <span>try sample →</span>
+    {% for i, s in enumerate(samples) %}
+    <button class="sample-btn" onclick="loadSample({{ i }})">{{ s.name.split(' vs ')[0].strip() }}</button>
+    {% endfor %}
+  </div>
+
+  <div id="errorMsg" class="error-msg"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-label">RESUME TEXT</div>
+      <textarea id="resume" placeholder="Paste your resume here...&#10;&#10;Include skills, experience, education, and projects."></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label">JOB DESCRIPTION</div>
+      <textarea id="jd" placeholder="Paste the job description here...&#10;&#10;Include required skills, responsibilities, and qualifications."></textarea>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <button id="analyzeBtn" onclick="analyze()">⚡ Analyze Match</button>
+  </div>
+
+  <div id="results">
+    <div class="score-card">
+      <div class="score-number" id="scoreDisplay">0%</div>
+      <div class="score-label">Fitness Score</div>
+      <div class="grade-badge" id="gradeBadge"></div>
+      <div class="bar-wrap"><div class="bar-fill" id="barFill"></div></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-val" id="statScore">-</div>
+        <div class="stat-key">Match Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statKw">-</div>
+        <div class="stat-key">Keywords Matched</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statGrade">-</div>
+        <div class="stat-key">Grade</div>
+      </div>
+    </div>
+
+    <div class="kw-panel">
+      <div class="kw-title">TOP MATCHED KEYWORDS</div>
+      <div class="keywords" id="keywords"></div>
+    </div>
+  </div>
+
+  <div class="explainer">
+    <h2>// how it works</h2>
+    <div class="exp-grid">
+      <div class="exp-card">
+        <div class="exp-icon">🧹</div>
+        <h3>Step 1 — Preprocess Text</h3>
+        <p>Both texts are lowercased, special characters are removed, and common stopwords (like "the", "is", "and") are filtered out, leaving only meaningful terms.</p>
+      </div>
+      <div class="exp-card">
+        <div class="exp-icon">📊</div>
+        <h3>Step 2 — TF-IDF Vectorization</h3>
+        <p>Each word gets a weight. TF (how often it appears) × IDF (how rare it is globally). This highlights important keywords like "Python" or "Kubernetes" over generic words.</p>
+      </div>
+      <div class="exp-card">
+        <div class="exp-icon">📐</div>
+        <h3>Step 3 — Cosine Similarity</h3>
+        <p>Each document becomes a vector. Cosine similarity measures the angle between them. Angle = 0° means perfect match (score 100%). It's length-independent, so short vs long docs are compared fairly.</p>
+      </div>
+      <div class="exp-card">
+        <div class="exp-icon">🎯</div>
+        <h3>Step 4 — Score + Keywords</h3>
+        <p>The similarity value (0–1) is multiplied by 100 to give a percentage. Keywords that appear in both documents with high TF-IDF weight are surfaced as the top matched keywords.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>Built with Python · sklearn · Flask &nbsp;|&nbsp; College ML Project</footer>
+
+</div>
+
+<script>
+  // Make Python's enumerate available as a Jinja2-style workaround
+  // (Jinja2 already handles this above via `enumerate`)
+
+  async function loadSample(idx) {
+    const res = await fetch(`/sample/${idx}`);
+    const data = await res.json();
+    document.getElementById('resume').value = data.resume;
+    document.getElementById('jd').value = data.jd;
+    document.getElementById('results').style.display = 'none';
+  }
+
+  async function analyze() {
+    const resume = document.getElementById('resume').value.trim();
+    const jd = document.getElementById('jd').value.trim();
+    const errEl = document.getElementById('errorMsg');
+    const btn = document.getElementById('analyzeBtn');
+
+    errEl.style.display = 'none';
+    if (!resume || !jd) {
+      errEl.textContent = 'Please fill in both the resume and the job description.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+
+    try {
+      const res = await fetch('/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume, jd })
+      });
+      const data = await res.json();
+      if (data.error) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+      displayResults(data);
+    } catch (e) {
+      errEl.textContent = 'Server error. Make sure the Flask app is running.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ Analyze Match';
+    }
+  }
+
+  function displayResults(data) {
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Animate score
+    const scoreEl = document.getElementById('scoreDisplay');
+    let current = 0;
+    const target = data.score;
+    const step = target / 60;
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      scoreEl.textContent = current.toFixed(1) + '%';
+      if (current >= target) clearInterval(interval);
+    }, 16);
+
+    // Bar
+    setTimeout(() => {
+      document.getElementById('barFill').style.width = data.score + '%';
+    }, 100);
+
+    // Grade badge
+    const gradeEl = document.getElementById('gradeBadge');
+    gradeEl.textContent = `${data.grade}  —  ${data.label}`;
+    gradeEl.className = `grade-badge grade-${data.grade}`;
+
+    // Stats
+    document.getElementById('statScore').textContent = data.score + '%';
+    document.getElementById('statKw').textContent = data.total_matched;
+    document.getElementById('statGrade').textContent = data.grade;
+
+    // Keywords
+    const kwEl = document.getElementById('keywords');
+    kwEl.innerHTML = '';
+    if (data.matched_keywords.length === 0) {
+      kwEl.innerHTML = '<span style="color:var(--muted);font-size:0.85rem;">No significant keywords matched.</span>';
+    } else {
+      data.matched_keywords.forEach(kw => {
+        const tag = document.createElement('span');
+        tag.className = 'kw-tag';
+        tag.textContent = kw;
+        kwEl.appendChild(tag);
+      });
+    }
+  }
+</script>
+</body>
+</html>
