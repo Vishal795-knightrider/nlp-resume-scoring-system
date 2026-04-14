@@ -20,7 +20,6 @@ from scorer import score_resume, get_grade
 from sample_data import SAMPLES
 
 app = Flask(__name__)
-app.jinja_env.globals.update(enumerate=enumerate)
 
 # ── Max allowed PDF size: 5 MB (safety limit) ───────────────────────────────
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024   # 5 MB in bytes

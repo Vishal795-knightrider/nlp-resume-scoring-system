@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resume Fitness Scorer</title>
+  <title>Resume Fitness Scorer v2</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
   <style>
     :root {
@@ -116,9 +116,14 @@
       margin-bottom: 0.7rem;
       display: flex; align-items: center; gap: 0.4rem;
     }
-    .panel-label::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .panel-label::before {
+      content: ''; display: block;
+      width: 6px; height: 6px;
+      border-radius: 50%; background: var(--accent);
+    }
+
     textarea {
-      width: 100%; height: 260px;
+      width: 100%; height: 240px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -132,6 +137,86 @@
       transition: border-color 0.2s;
     }
     textarea:focus { border-color: var(--accent); }
+
+    /* ── NEW: PDF Upload Zone ──────────────────────────────────────────────── */
+    .upload-zone {
+      margin-top: 0.8rem;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--accent2);
+      background: rgba(0,212,170,0.05);
+    }
+
+    /* The hidden real file input — overlays the entire zone */
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+
+    .upload-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .upload-hint strong { color: var(--accent2); }
+
+    /* Status pill shown after a file is chosen */
+    .upload-status {
+      display: none;
+      margin-top: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--surface);
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: space-between;
+    }
+    .upload-status.visible { display: flex; }
+    .upload-status.success { border-color: rgba(0,212,170,0.4); color: var(--accent2); background: rgba(0,212,170,0.08); }
+    .upload-status.error   { border-color: rgba(255,101,132,0.4); color: var(--accent3); background: rgba(255,101,132,0.08); }
+    .upload-status.loading { border-color: rgba(108,99,255,0.4); color: var(--accent); background: rgba(108,99,255,0.08); }
+
+    /* Clear-PDF button inside the status pill */
+    .clear-pdf {
+      background: none; border: none; cursor: pointer;
+      color: inherit; font-size: 0.8rem; padding: 0; line-height: 1;
+      opacity: 0.7;
+    }
+    .clear-pdf:hover { opacity: 1; }
+
+    /* Divider between PDF zone and manual textarea */
+    .or-divider {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+    .or-divider::before,
+    .or-divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+    .or-divider span {
+      font-family: var(--mono); font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.1em;
+    }
+    /* ── End PDF Upload styles ─────────────────────────────────────────────── */
 
     /* Analyze button */
     .cta-row { text-align: center; margin: 1.4rem 0; }
@@ -269,35 +354,84 @@
 <div class="wrapper">
 
   <header>
-    <div class="badge">ML COLLEGE PROJECT</div>
+    <div class="badge">ML COLLEGE PROJECT · v2</div>
     <h1>Resume Fitness<br/>Scoring System</h1>
-    <p class="subtitle">TF-IDF · Cosine Similarity · Keyword Matching</p>
+    <p class="subtitle">TF-IDF · Cosine Similarity · PDF Upload · Keyword Matching</p>
   </header>
 
   <div class="samples-bar">
     <span>try sample →</span>
-    {% for i, s in enumerate(samples) %}
-    <button class="sample-btn" onclick="loadSample({{ i }})">{{ s.name.split(' vs ')[0].strip() }}</button>
+    {% for s in samples %}
+    <button class="sample-btn" onclick="loadSample({{ loop.index0 }})">{{ s.name.split(' vs ')[0].strip() }}</button>
     {% endfor %}
   </div>
 
   <div id="errorMsg" class="error-msg"></div>
 
+  <!-- ── Main two-column grid ─────────────────────────────────────────────── -->
   <div class="grid">
+
+    <!-- LEFT PANEL: Resume Input (PDF upload + manual text fallback) -->
     <div class="panel">
-      <div class="panel-label">RESUME TEXT</div>
-      <textarea id="resume" placeholder="Paste your resume here...&#10;&#10;Include skills, experience, education, and projects."></textarea>
+      <div class="panel-label">RESUME INPUT</div>
+
+      <!-- ── NEW: PDF Upload Zone ──────────────────────────────────────────
+           When the user picks a file:
+             1. onPdfChange() is called
+             2. It POSTs the file to /upload-pdf
+             3. On success, extracted text fills the textarea below
+             4. On error, an error status is shown and textarea stays editable
+      ────────────────────────────────────────────────────────────────────── -->
+      <div class="upload-zone" id="uploadZone">
+        <!-- Hidden native file picker — clicking the zone triggers this -->
+        <input
+          type="file"
+          id="pdfInput"
+          name="resume_pdf"
+          accept=".pdf"
+          onchange="onPdfChange(this)"
+        />
+        <div class="upload-icon">📄</div>
+        <div class="upload-hint">
+          <strong>Click to upload PDF resume</strong><br/>
+          or drag &amp; drop here · max 5 MB
+        </div>
+      </div>
+
+      <!-- Status pill: shows loading / success / error state -->
+      <div class="upload-status" id="uploadStatus">
+        <span id="uploadStatusText"></span>
+        <button class="clear-pdf" onclick="clearPdf()" title="Remove PDF">✕</button>
+      </div>
+
+      <!-- Divider between PDF zone and manual textarea -->
+      <div class="or-divider"><span>OR TYPE / PASTE BELOW</span></div>
+
+      <!-- Manual text area — always visible as fallback -->
+      <textarea
+        id="resume"
+        placeholder="Paste your resume here...&#10;&#10;Include skills, experience, education, and projects."
+      ></textarea>
     </div>
+
+    <!-- RIGHT PANEL: Job Description (manual text only — no change) -->
     <div class="panel">
       <div class="panel-label">JOB DESCRIPTION</div>
-      <textarea id="jd" placeholder="Paste the job description here...&#10;&#10;Include required skills, responsibilities, and qualifications."></textarea>
+      <textarea
+        id="jd"
+        placeholder="Paste the job description here...&#10;&#10;Include required skills, responsibilities, and qualifications."
+        style="height: 400px;"
+      ></textarea>
     </div>
+
   </div>
+  <!-- ── End grid ─────────────────────────────────────────────────────────── -->
 
   <div class="cta-row">
     <button id="analyzeBtn" onclick="analyze()">⚡ Analyze Match</button>
   </div>
 
+  <!-- ── Results section (hidden until analysis runs) ─────────────────────── -->
   <div id="results">
     <div class="score-card">
       <div class="score-number" id="scoreDisplay">0%</div>
@@ -327,9 +461,15 @@
     </div>
   </div>
 
+  <!-- ── How it works ─────────────────────────────────────────────────────── -->
   <div class="explainer">
     <h2>// how it works</h2>
     <div class="exp-grid">
+      <div class="exp-card">
+        <div class="exp-icon">📄</div>
+        <h3>Step 0 — PDF Upload (New!)</h3>
+        <p>Upload a PDF resume. The server extracts all text using pypdf (page by page), then fills the resume field automatically. Manual text input still works as a fallback.</p>
+      </div>
       <div class="exp-card">
         <div class="exp-icon">🧹</div>
         <h3>Step 1 — Preprocess Text</h3>
@@ -343,110 +483,186 @@
       <div class="exp-card">
         <div class="exp-icon">📐</div>
         <h3>Step 3 — Cosine Similarity</h3>
-        <p>Each document becomes a vector. Cosine similarity measures the angle between them. Angle = 0° means perfect match (score 100%). It's length-independent, so short vs long docs are compared fairly.</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">🎯</div>
-        <h3>Step 4 — Score + Keywords</h3>
-        <p>The similarity value (0–1) is multiplied by 100 to give a percentage. Keywords that appear in both documents with high TF-IDF weight are surfaced as the top matched keywords.</p>
+        <p>Each document becomes a vector. Cosine similarity measures the angle between them. Angle = 0° means perfect match (100%). It's length-independent, so short vs long docs are compared fairly.</p>
       </div>
     </div>
   </div>
 
-  <footer>Built with Python · sklearn · Flask &nbsp;|&nbsp; College ML Project</footer>
+  <footer>Built with Python · sklearn · pypdf · Flask &nbsp;|&nbsp; College ML Project v2</footer>
 
 </div>
 
+<!-- ── JavaScript ─────────────────────────────────────────────────────────── -->
 <script>
-  // Make Python's enumerate available as a Jinja2-style workaround
-  // (Jinja2 already handles this above via `enumerate`)
 
+  // ── PDF Upload Logic ───────────────────────────────────────────────────────
+
+  /**
+   * Called when the user picks a file from the file picker.
+   * Uploads it to /upload-pdf and fills the resume textarea with the result.
+   */
+  async function onPdfChange(input) {
+    const file = input.files[0];
+    if (!file) return;                          // user cancelled the dialog
+
+    setUploadStatus("loading", "⏳ Extracting text from PDF...");
+
+    // Build a FormData object (multipart/form-data) with the file
+    const formData = new FormData();
+    formData.append("resume_pdf", file);        // key must match request.files["resume_pdf"] in Flask
+
+    try {
+      const res = await fetch("/upload-pdf", {
+        method: "POST",
+        body: formData                          // No Content-Type header needed — browser sets it with boundary
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        // Server returned a descriptive error (wrong format, scanned PDF, etc.)
+        setUploadStatus("error", "❌ " + data.error);
+        input.value = "";                       // reset file picker
+        return;
+      }
+
+      // Success — fill the resume textarea with extracted text
+      document.getElementById("resume").value = data.text;
+      setUploadStatus(
+        "success",
+        `✅ ${file.name}  ·  ${data.pages} page${data.pages !== 1 ? "s" : ""}  ·  ${data.text.length} chars`
+      );
+
+    } catch (err) {
+      setUploadStatus("error", "❌ Upload failed. Is the Flask server running?");
+      input.value = "";
+    }
+  }
+
+  /**
+   * Show/hide the upload status pill with a given state and message.
+   * state: "loading" | "success" | "error"
+   */
+  function setUploadStatus(state, message) {
+    const el = document.getElementById("uploadStatus");
+    const textEl = document.getElementById("uploadStatusText");
+    el.className = "upload-status visible " + state;
+    textEl.textContent = message;
+  }
+
+  /**
+   * Clear the uploaded PDF: reset file input, clear textarea, hide status.
+   */
+  function clearPdf() {
+    document.getElementById("pdfInput").value = "";   // reset file picker
+    document.getElementById("resume").value = "";     // clear textarea
+    const el = document.getElementById("uploadStatus");
+    el.className = "upload-status";                   // hide pill
+  }
+
+  // ── Drag & Drop visual feedback ───────────────────────────────────────────
+  const zone = document.getElementById("uploadZone");
+  zone.addEventListener("dragover",  (e) => { e.preventDefault(); zone.classList.add("drag-over"); });
+  zone.addEventListener("dragleave", ()  => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop",      (e) => { e.preventDefault(); zone.classList.remove("drag-over"); });
+
+
+  // ── Sample Loader (unchanged from v1) ─────────────────────────────────────
   async function loadSample(idx) {
     const res = await fetch(`/sample/${idx}`);
     const data = await res.json();
-    document.getElementById('resume').value = data.resume;
-    document.getElementById('jd').value = data.jd;
-    document.getElementById('results').style.display = 'none';
+    document.getElementById("resume").value = data.resume;
+    document.getElementById("jd").value = data.jd;
+    document.getElementById("results").style.display = "none";
+    // Also reset any PDF upload state when loading a sample
+    clearPdf();
   }
 
-  async function analyze() {
-    const resume = document.getElementById('resume').value.trim();
-    const jd = document.getElementById('jd').value.trim();
-    const errEl = document.getElementById('errorMsg');
-    const btn = document.getElementById('analyzeBtn');
 
-    errEl.style.display = 'none';
+  // ── Analyze (unchanged from v1) ───────────────────────────────────────────
+  async function analyze() {
+    // Resume text comes from the textarea — whether filled by PDF upload or manual input
+    const resume = document.getElementById("resume").value.trim();
+    const jd     = document.getElementById("jd").value.trim();
+    const errEl  = document.getElementById("errorMsg");
+    const btn    = document.getElementById("analyzeBtn");
+
+    errEl.style.display = "none";
+
     if (!resume || !jd) {
-      errEl.textContent = 'Please fill in both the resume and the job description.';
-      errEl.style.display = 'block';
+      errEl.textContent = "Please provide both a resume and a job description.";
+      errEl.style.display = "block";
       return;
     }
 
     btn.disabled = true;
-    btn.textContent = 'Analyzing...';
+    btn.textContent = "Analyzing...";
 
     try {
-      const res = await fetch('/score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resume, jd })
       });
       const data = await res.json();
-      if (data.error) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+      if (data.error) { errEl.textContent = data.error; errEl.style.display = "block"; return; }
       displayResults(data);
     } catch (e) {
-      errEl.textContent = 'Server error. Make sure the Flask app is running.';
-      errEl.style.display = 'block';
+      errEl.textContent = "Server error. Make sure the Flask app is running.";
+      errEl.style.display = "block";
     } finally {
       btn.disabled = false;
-      btn.textContent = '⚡ Analyze Match';
+      btn.textContent = "⚡ Analyze Match";
     }
   }
 
-  function displayResults(data) {
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    // Animate score
-    const scoreEl = document.getElementById('scoreDisplay');
+  // ── Display Results (unchanged from v1) ──────────────────────────────────
+  function displayResults(data) {
+    document.getElementById("results").style.display = "block";
+    document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // Animate score counter
+    const scoreEl = document.getElementById("scoreDisplay");
     let current = 0;
     const target = data.score;
     const step = target / 60;
     const interval = setInterval(() => {
       current = Math.min(current + step, target);
-      scoreEl.textContent = current.toFixed(1) + '%';
+      scoreEl.textContent = current.toFixed(1) + "%";
       if (current >= target) clearInterval(interval);
     }, 16);
 
-    // Bar
+    // Progress bar
     setTimeout(() => {
-      document.getElementById('barFill').style.width = data.score + '%';
+      document.getElementById("barFill").style.width = data.score + "%";
     }, 100);
 
     // Grade badge
-    const gradeEl = document.getElementById('gradeBadge');
+    const gradeEl = document.getElementById("gradeBadge");
     gradeEl.textContent = `${data.grade}  —  ${data.label}`;
     gradeEl.className = `grade-badge grade-${data.grade}`;
 
     // Stats
-    document.getElementById('statScore').textContent = data.score + '%';
-    document.getElementById('statKw').textContent = data.total_matched;
-    document.getElementById('statGrade').textContent = data.grade;
+    document.getElementById("statScore").textContent = data.score + "%";
+    document.getElementById("statKw").textContent    = data.total_matched;
+    document.getElementById("statGrade").textContent = data.grade;
 
     // Keywords
-    const kwEl = document.getElementById('keywords');
-    kwEl.innerHTML = '';
+    const kwEl = document.getElementById("keywords");
+    kwEl.innerHTML = "";
     if (data.matched_keywords.length === 0) {
       kwEl.innerHTML = '<span style="color:var(--muted);font-size:0.85rem;">No significant keywords matched.</span>';
     } else {
       data.matched_keywords.forEach(kw => {
-        const tag = document.createElement('span');
-        tag.className = 'kw-tag';
+        const tag = document.createElement("span");
+        tag.className = "kw-tag";
         tag.textContent = kw;
         kwEl.appendChild(tag);
       });
     }
   }
+
 </script>
 </body>
 </html>
