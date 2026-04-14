@@ -156,4 +156,6 @@ if __name__ == "__main__":
     print("  PDF Upload + TF-IDF + Cosine Similarity")
     print("  Open http://localhost:5000")
     print("=" * 52 + "\n")
-    app.run(debug=True)
+    import os
+
+app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
