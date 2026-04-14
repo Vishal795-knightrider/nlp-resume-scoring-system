@@ -1,132 +1,149 @@
-# 📄 Resume Job Fitness Scoring System
+# 🚀 Resume Fitness Scoring System (AI-Powered)
 
-A beginner-friendly ML college project that uses **TF-IDF** and **Cosine Similarity**
-to measure how well a resume matches a job description.
+An intelligent web application that evaluates how well a candidate's resume matches a job description using Machine Learning techniques like **TF-IDF** and **Cosine Similarity**.
 
 ---
 
-## 🗂️ Project Structure
+## 📌 Features
+
+* 📄 Upload Resume (PDF support using pypdf)
+* ✍️ Manual Resume Input
+* 📋 Job Description Input
+* 🤖 ML-based Matching (TF-IDF + Cosine Similarity)
+* 📊 Match Score (0–100%)
+* 🏆 Grade System (A–F)
+* 🔍 Top Matched Keywords
+* ⚡ Fast and Interactive UI (Flask + JS)
+
+---
+
+## 🧠 How It Works (ML Pipeline)
+
+1. **Input**
+
+   * Resume (text or PDF)
+   * Job Description
+
+2. **PDF Parsing**
+
+   * Extract text using `pypdf`
+
+3. **Text Preprocessing**
+
+   * Lowercasing
+   * Removing stopwords & special characters
+
+4. **TF-IDF Vectorization**
+
+   * Converts text into numerical vectors
+   * Assigns importance to words
+
+5. **Cosine Similarity**
+
+   * Measures similarity between resume & job vectors
+
+6. **Score Generation**
+
+   * Outputs match percentage (0–100%)
+
+7. **Keyword Matching**
+
+   * Displays top matched keywords
+
+---
+
+## 🛠️ Tech Stack
+
+* **Backend:** Python, Flask
+* **ML/NLP:** scikit-learn (TF-IDF, Cosine Similarity)
+* **PDF Parsing:** pypdf
+* **Frontend:** HTML, CSS, JavaScript
+
+---
+
+## 📂 Project Structure
 
 ```
-resume_scorer/
-├── scorer.py        ← Core ML logic (TF-IDF + Cosine Similarity)
-├── sample_data.py   ← 3 sample resume + JD pairs for testing
-├── main.py          ← CLI runner (run all samples, print results)
-├── app.py           ← Flask web app (optional UI)
-├── requirements.txt ← Python dependencies
+Resume_Project/
+│
+├── app.py
+├── scorer.py
+├── sample_data.py
+├── requirements.txt
+│
 └── templates/
-    └── index.html   ← Web UI for Flask app
+    └── index.html
 ```
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Installation & Setup
 
-```bash
-# 1. Clone or download this folder
-# 2. Install dependencies
+### 1. Clone Repository
+
+```
+git clone https://github.com/your-username/resume-fitness-scoring.git
+cd resume-fitness-scoring
+```
+
+### 2. Install Dependencies
+
+```
 pip install -r requirements.txt
+```
 
-# 3. Run CLI version
-python main.py
+### 3. Run the Application
 
-# 4. (Optional) Run Flask web app
+```
 python app.py
-# Then open http://localhost:5000
+```
+
+### 4. Open in Browser
+
+```
+http://localhost:5000
 ```
 
 ---
 
-## 🤔 Why TF-IDF?
+## 📊 Example Output
 
-| Term | Full Form | What it does |
-|------|-----------|--------------|
-| TF | Term Frequency | How often a word appears in the document |
-| IDF | Inverse Document Frequency | Penalizes words common across all documents |
-
-Together, TF-IDF gives each word a **weight** that reflects its true importance.
-- Common words like "the", "is" → low weight
-- Domain-specific words like "Python", "Kubernetes" → high weight
-
-This lets us represent a resume as a **vector of meaningful numbers**.
+* Match Score: **31.5%**
+* Grade: **D (Weak Match)**
+* Keywords: Python, ML, Pandas, SQL, Data Analysis
 
 ---
 
-## 📐 Why Cosine Similarity?
+## ⚠️ Limitations
 
-After TF-IDF, each document is a **vector** (list of numbers).
-
-Cosine Similarity measures the **angle** between two vectors:
-- Angle = 0° → perfect match → score = 1.0 → **100%**
-- Angle = 90° → no overlap → score = 0.0 → **0%**
-
-**Why cosine and not Euclidean distance?**
-- Cosine ignores document length (a short resume vs a long JD is still fair)
-- It focuses on **direction** (shared topics), not magnitude
+* Keyword-based matching (no deep semantic understanding)
+* Cannot detect synonyms effectively
+* Performance depends on input text quality
 
 ---
 
-## 🔄 Full ML Pipeline
+## 🚀 Future Improvements
 
-```
-Raw Resume + JD
-     ↓
-[Step 1] Preprocess
-  • Lowercase all text
-  • Remove special characters
-  • Remove stopwords (the, is, and, ...)
-     ↓
-[Step 2] TF-IDF Vectorization
-  • Fit vectorizer on both documents
-  • Each word gets a TF-IDF weight
-  • Documents → numerical vectors
-     ↓
-[Step 3] Cosine Similarity
-  • Measure angle between resume vector and JD vector
-  • Returns value 0.0 to 1.0
-     ↓
-[Step 4] Output
-  • Score = similarity × 100 (as a percentage)
-  • Keywords = words present in both with high TF-IDF weight
-```
+* Use **BERT / NLP embeddings** for better semantic matching
+* Add **skill extraction using Named Entity Recognition (NER)**
+* Improve UI/UX
+* Deploy on cloud (AWS / Render / Vercel)
 
 ---
 
-## 📊 Sample Results
+## 👨‍💻 Author
 
-| Resume vs Job Description | Expected | Score |
-|---------------------------|----------|-------|
-| Data Scientist vs ML Engineer JD | High Match | ~55–70% |
-| Frontend Dev vs Backend Python JD | Low Match | ~10–20% |
-| DevOps Engineer vs DevOps JD | Very High Match | ~70–85% |
+**Vishal Kashyap**
+Computer Science Student
 
 ---
 
-## 🎓 Grade System
+## ⭐ Contribute
 
-| Score | Grade | Label |
-|-------|-------|-------|
-| 80–100% | A | Excellent Match 🎯 |
-| 60–79% | B | Good Match ✅ |
-| 40–59% | C | Average Match ⚠️ |
-| 20–39% | D | Weak Match 📉 |
-| 0–19% | F | Poor Match ❌ |
+Feel free to fork, improve, and submit pull requests!
 
 ---
 
-## 🔧 Tech Stack
+## 📜 License
 
-- **Python 3.8+**
-- **scikit-learn** — TF-IDF, Cosine Similarity
-- **pandas** — Results table and CSV export
-- **Flask** *(optional)* — Simple web UI
-
----
-
-## 💡 Possible Improvements (for viva/report)
-
-1. Use **spaCy** for better NLP preprocessing (lemmatization, NER)
-2. Try **BERT embeddings** instead of TF-IDF for semantic similarity
-3. Add **resume section parsing** (skills vs experience vs education)
-4. Build a **scoring breakdown** by section
-5. Add **skill gap analysis** — what skills are missing from the resume
+This project is for educational purposes.
