@@ -17,8 +17,8 @@ An intelligent web application that evaluates how well a candidate's resume matc
 
 ---
 
-## 🧠 How It Works (ML Pipeline)
-
+## 🧠 KESE KAAM KRTA HAI YEH (ML Pipeline)
+F
 1. **Input**
 
    * Resume (text or PDF)

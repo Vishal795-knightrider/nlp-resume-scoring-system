@@ -75,10 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadSample(idx) {
   const res  = await fetch(`/sample/${idx}`);
   const data = await res.json();
+
+  // ✅ pehle clear karo (PDF state reset)
+  clearPdf();
+
+  // ✅ fir sample data fill karo
   document.getElementById("resume").value = data.resume;
   document.getElementById("jd").value     = data.jd;
+
   document.getElementById("results").style.display = "none";
-  clearPdf();
 }
 
 
