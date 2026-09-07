@@ -1,32 +1,27 @@
 /* =============================================================================
-   script.js — ResumeFit AI Resume Intelligence (v3 UI Redesign)
-   Fully compatible with Flask backend: /upload-pdf, /score, /sample/<idx>
-   Zero fake results: All values dynamically bound from backend responses.
+   ResumeFit — Frontend Logic (script.js)
+   Clean developer tool implementation.
+   Preserves Flask API contracts (/upload-pdf, /score, /sample/<idx>).
+   Strictly zero emojis in the UI.
    ============================================================================= */
 
-// Global state tracking
-let analysisTimer = null;
+/* ── Emoji Stripping Sanitizer ────────────────────────────────────────────── */
+/**
+ * Strips all Unicode emojis, emoticons, and decorative pictographs from backend text.
+ */
+function stripEmojis(text) {
+  if (!text) return "";
+  return text
+    .replace(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-/* ── DOM Ready Initializer ────────────────────────────────────────────────── */
+/* ── DOM Initializer ──────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
-  setupNavbarScroll();
   setupTextareaCounters();
   setupDragAndDrop();
 });
-
-/* ── Navbar Sticky Scroll Treatment ───────────────────────────────────────── */
-function setupNavbarScroll() {
-  const navbar = document.getElementById("navbar");
-  if (!navbar) return;
-
-  window.addEventListener("scroll", () => {
-    if (window.scrollY > 20) {
-      navbar.classList.add("scrolled");
-    } else {
-      navbar.classList.remove("scrolled");
-    }
-  }, { passive: true });
-}
 
 /* ── Real-Time Character Counters ─────────────────────────────────────────── */
 function setupTextareaCounters() {
@@ -36,13 +31,13 @@ function setupTextareaCounters() {
   const jdCount = document.getElementById("jdCharCount");
 
   const updateResume = () => {
-    const len = resumeEl ? resumeEl.value.length : 0;
-    if (resumeCount) resumeCount.textContent = `${len.toLocaleString()} characters`;
+    const count = resumeEl ? resumeEl.value.length : 0;
+    if (resumeCount) resumeCount.textContent = `${count.toLocaleString()} chars`;
   };
 
   const updateJd = () => {
-    const len = jdEl ? jdEl.value.length : 0;
-    if (jdCount) jdCount.textContent = `${len.toLocaleString()} characters`;
+    const count = jdEl ? jdEl.value.length : 0;
+    if (jdCount) jdCount.textContent = `${count.toLocaleString()} chars`;
   };
 
   if (resumeEl) {
@@ -73,38 +68,38 @@ function clearJdText() {
   }
 }
 
-/* ── Error Banner Toast ───────────────────────────────────────────────────── */
+/* ── Error Banner ─────────────────────────────────────────────────────────── */
 function showError(message) {
-  const errBanner = document.getElementById("errorMsg");
-  const errText = document.getElementById("errorMsgText");
-  if (errText) errText.textContent = message;
-  if (errBanner) {
-    errBanner.classList.add("visible");
-    errBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+  const banner = document.getElementById("errorMsg");
+  const text = document.getElementById("errorMsgText");
+  if (text) text.textContent = stripEmojis(message);
+  if (banner) {
+    banner.classList.add("visible");
+    banner.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 }
 
 function dismissError() {
-  const errBanner = document.getElementById("errorMsg");
-  if (errBanner) errBanner.classList.remove("visible");
+  const banner = document.getElementById("errorMsg");
+  if (banner) banner.classList.remove("visible");
 }
 
-/* ── Drag & Drop Handling ─────────────────────────────────────────────────── */
+/* ── Drag & Drop PDF Handling ─────────────────────────────────────────────── */
 function setupDragAndDrop() {
   const zone = document.getElementById("uploadZone");
   const fileInput = document.getElementById("pdfInput");
   if (!zone) return;
 
-  ["dragenter", "dragover"].forEach(eventName => {
-    zone.addEventListener(eventName, (e) => {
+  ["dragenter", "dragover"].forEach(name => {
+    zone.addEventListener(name, (e) => {
       e.preventDefault();
       e.stopPropagation();
       zone.classList.add("drag-over");
     });
   });
 
-  ["dragleave", "drop"].forEach(eventName => {
-    zone.addEventListener(eventName, (e) => {
+  ["dragleave", "drop"].forEach(name => {
+    zone.addEventListener(name, (e) => {
       e.preventDefault();
       e.stopPropagation();
       zone.classList.remove("drag-over");
@@ -115,15 +110,13 @@ function setupDragAndDrop() {
     const dt = e.dataTransfer;
     const files = dt.files;
     if (files && files.length > 0) {
-      if (fileInput) {
-        fileInput.files = files;
-      }
+      if (fileInput) fileInput.files = files;
       onPdfChange({ files: files });
     }
   });
 }
 
-/* ── PDF Upload Logic (Preserving API Contract: /upload-pdf) ───────────────── */
+/* ── PDF Upload Logic (/upload-pdf) ───────────────────────────────────────── */
 async function onPdfChange(input) {
   const file = input.files ? input.files[0] : null;
   if (!file) return;
@@ -131,28 +124,27 @@ async function onPdfChange(input) {
   dismissError();
 
   if (!file.name.toLowerCase().endsWith(".pdf")) {
-    showError("Please select a valid PDF file.");
+    showError("Only PDF files are supported.");
     return;
   }
 
-  // 5 MB upload limit
   if (file.size > 5 * 1024 * 1024) {
-    showError("File size exceeds 5MB limit. Please upload a smaller PDF.");
+    showError("File exceeds 5MB limit. Please upload a smaller PDF.");
     return;
   }
 
   setUploadStatus("loading", `Extracting text from ${file.name}...`);
 
   const formData = new FormData();
-  formData.append("resume_pdf", file); // Key matches Flask route exactly
+  formData.append("resume_pdf", file); // Route expects 'resume_pdf'
 
   try {
     const res = await fetch("/upload-pdf", { method: "POST", body: formData });
     const data = await res.json();
 
     if (data.error) {
-      setUploadStatus("error", data.error);
-      showError(data.error);
+      setUploadStatus("error", stripEmojis(data.error));
+      showError(stripEmojis(data.error));
       const pdfInput = document.getElementById("pdfInput");
       if (pdfInput) pdfInput.value = "";
       return;
@@ -166,32 +158,26 @@ async function onPdfChange(input) {
 
     setUploadStatus(
       "success",
-      `✓ ${file.name} (${data.pages} page${data.pages !== 1 ? "s" : ""} · ${data.text.length.toLocaleString()} chars)`
+      `${file.name} (${data.pages} page${data.pages !== 1 ? "s" : ""}, ${data.text.length.toLocaleString()} characters)`
     );
 
   } catch (err) {
-    setUploadStatus("error", "Upload failed. Please verify server connection.");
-    showError("Could not process PDF. Please paste resume text manually.");
+    setUploadStatus("error", "Failed to process PDF.");
+    showError("Could not extract text from PDF. You may paste your resume text directly.");
     const pdfInput = document.getElementById("pdfInput");
     if (pdfInput) pdfInput.value = "";
   }
 }
 
-/**
- * Update upload status pill.
- * @param {string} state - "loading" | "success" | "error"
- * @param {string} message - Text to display
- */
 function setUploadStatus(state, message) {
   const el = document.getElementById("uploadStatus");
   const textEl = document.getElementById("uploadStatusText");
   if (!el || !textEl) return;
 
-  el.className = "upload-status visible " + state;
-  textEl.textContent = message;
+  el.className = `upload-status visible ${state}`;
+  textEl.textContent = stripEmojis(message);
 }
 
-/** Reset the PDF upload area and clear the resume textarea. */
 function clearPdf() {
   const pdfInput = document.getElementById("pdfInput");
   if (pdfInput) pdfInput.value = "";
@@ -200,7 +186,7 @@ function clearPdf() {
   if (statusEl) statusEl.className = "upload-status";
 }
 
-/* ── Sample Loader (Preserving API Contract: /sample/<idx>) ───────────────── */
+/* ── Sample Loader (/sample/<idx>) ────────────────────────────────────────── */
 async function loadSample(idx) {
   dismissError();
 
@@ -209,10 +195,8 @@ async function loadSample(idx) {
     if (!res.ok) throw new Error("Could not load sample");
     const data = await res.json();
 
-    // Reset upload state
     clearPdf();
 
-    // Fill inputs
     const resumeEl = document.getElementById("resume");
     const jdEl = document.getElementById("jd");
 
@@ -225,24 +209,23 @@ async function loadSample(idx) {
       jdEl.dispatchEvent(new Event("input"));
     }
 
-    // Reset results display to empty state until user clicks analyze
+    // Reset results visibility until user clicks Analyze
     const resultsEl = document.getElementById("results");
     const emptyEl = document.getElementById("emptyState");
     if (resultsEl) resultsEl.style.display = "none";
     if (emptyEl) emptyEl.style.display = "block";
 
-    // Scroll smoothly to workspace
     const workspace = document.getElementById("workspace");
     if (workspace) {
       workspace.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
   } catch (err) {
-    showError("Failed to load sample dataset. Please check your network connection.");
+    showError("Could not load sample dataset. Verify the server is running.");
   }
 }
 
-/* ── Main Analyze Function (Preserving API Contract: /score) ──────────────── */
+/* ── Main Analyze Function (/score) ───────────────────────────────────────── */
 async function analyze() {
   const resumeEl = document.getElementById("resume");
   const jdEl = document.getElementById("jd");
@@ -255,22 +238,19 @@ async function analyze() {
   dismissError();
 
   if (!resume || !jd) {
-    showError("Please provide both your resume and a job description before analyzing.");
+    showError("Both resume and job description are required.");
     return;
   }
 
-  // Set loading state
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = "<span>Analyzing Resume Alignment...</span>";
+    btn.textContent = "Analyzing...";
   }
   if (loader) {
     loader.classList.add("active");
-    startLoaderAnimation();
   }
 
   try {
-    const startTime = Date.now();
     const res = await fetch("/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -278,79 +258,25 @@ async function analyze() {
     });
     const data = await res.json();
 
-    // Ensure a brief pleasant transition for the loader animation
-    const elapsed = Date.now() - startTime;
-    if (elapsed < 600) {
-      await new Promise(r => setTimeout(r, 600 - elapsed));
-    }
-
     if (data.error) {
-      showError(data.error);
+      showError(stripEmojis(data.error));
       return;
     }
 
     displayResults(data);
 
   } catch (e) {
-    showError("Server error while evaluating resume. Please ensure the backend is running.");
+    showError("Server error while processing resume. Check terminal logs.");
   } finally {
-    stopLoaderAnimation();
     if (loader) loader.classList.remove("active");
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = "<span>⚡ Analyze Match</span>";
+      btn.textContent = "Analyze Resume";
     }
   }
 }
 
-/* ── Multi-Stage Step Loader Animation ───────────────────────────────────── */
-function startLoaderAnimation() {
-  const steps = [
-    document.getElementById("step1"),
-    document.getElementById("step2"),
-    document.getElementById("step3"),
-    document.getElementById("step4")
-  ];
-
-  steps.forEach(s => {
-    if (s) {
-      s.className = "loader-step";
-      const icon = s.querySelector(".step-icon");
-      if (icon) icon.textContent = "○";
-    }
-  });
-
-  let currentStep = 0;
-
-  function advanceStep() {
-    if (currentStep < steps.length && steps[currentStep]) {
-      const step = steps[currentStep];
-      step.className = "loader-step active";
-      const icon = step.querySelector(".step-icon");
-      if (icon) icon.textContent = "→";
-
-      if (currentStep > 0 && steps[currentStep - 1]) {
-        const prev = steps[currentStep - 1];
-        prev.className = "loader-step completed";
-        const prevIcon = prev.querySelector(".step-icon");
-        if (prevIcon) prevIcon.textContent = "✓";
-      }
-      currentStep++;
-      analysisTimer = setTimeout(advanceStep, 250);
-    }
-  }
-
-  advanceStep();
-}
-
-function stopLoaderAnimation() {
-  if (analysisTimer) {
-    clearTimeout(analysisTimer);
-    analysisTimer = null;
-  }
-}
-
-/* ── Dynamic Results Dashboard Rendering ──────────────────────────────────── */
+/* ── Results Rendering ────────────────────────────────────────────────────── */
 function displayResults(data) {
   const resultsEl = document.getElementById("results");
   const emptyEl = document.getElementById("emptyState");
@@ -361,21 +287,20 @@ function displayResults(data) {
     resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // Render components dynamically with real backend payload
-  renderScoreHero(data);
-  renderQuickMetrics(data);
-  renderKeywordsSplit(data);
+  renderScoreOverview(data);
+  renderMetricsStrip(data);
+  renderKeywords(data);
   renderSuggestions(data.suggestions);
   renderResumeSummary(data.resume_summary);
 
   const timestampEl = document.getElementById("resultsTimestamp");
   if (timestampEl) {
-    timestampEl.textContent = `Analyzed at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    timestampEl.textContent = `Analyzed ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   }
 }
 
-/* ── Score Hero & Progress Gauge ──────────────────────────────────────────── */
-function renderScoreHero(data) {
+/* Score Overview with Gauge */
+function renderScoreOverview(data) {
   const score = data.score;
   const scoreDisplay = document.getElementById("scoreDisplay");
   const gradeBadge = document.getElementById("gradeBadge");
@@ -383,109 +308,96 @@ function renderScoreHero(data) {
   const gaugeProgress = document.getElementById("scoreGaugeProgress");
   const barFill = document.getElementById("barFill");
 
-  // Animate numeric counter
+  // Animate numeric score counter
   if (scoreDisplay) {
     let current = 0;
     const target = score;
-    const duration = 1000;
-    const steps = 40;
+    const steps = 30;
     const increment = target / steps;
-    const stepTime = duration / steps;
-
-    const counterInterval = setInterval(() => {
+    const interval = setInterval(() => {
       current = Math.min(current + increment, target);
       scoreDisplay.textContent = current.toFixed(1) + "%";
       if (current >= target) {
-        clearInterval(counterInterval);
+        clearInterval(interval);
         scoreDisplay.textContent = target.toFixed(1) + "%";
       }
-    }, stepTime);
+    }, 20);
   }
 
-  // Animate circular SVG progress gauge
+  // Circular gauge (radius 45 -> circumference ~282.74)
   if (gaugeProgress) {
-    const radius = 65;
-    const circumference = 2 * Math.PI * radius; // ~408.4
+    const circumference = 2 * Math.PI * 45;
     gaugeProgress.style.strokeDasharray = `${circumference}`;
 
-    // Color coordination based on score
     let strokeColor = "#2563EB";
-    if (score >= 80) strokeColor = "#059669";
+    if (score >= 80) strokeColor = "#166534";
     else if (score >= 60) strokeColor = "#2563EB";
-    else if (score >= 40) strokeColor = "#D97706";
-    else strokeColor = "#DC2626";
+    else if (score >= 40) strokeColor = "#B45309";
+    else strokeColor = "#991B1B";
 
     gaugeProgress.style.stroke = strokeColor;
-
     const offset = circumference - (score / 100) * circumference;
     setTimeout(() => {
       gaugeProgress.style.strokeDashoffset = `${offset}`;
-    }, 50);
+    }, 40);
   }
 
-  // Linear bar fill
+  // Fallback linear bar fill
   if (barFill) {
     setTimeout(() => {
       barFill.style.width = `${Math.min(Math.max(score, 2), 100)}%`;
-    }, 100);
+    }, 50);
   }
 
-  // Grade badge styling
+  // Grade badge & label (clean, without emojis)
+  const cleanLabel = stripEmojis(data.label);
   if (gradeBadge) {
-    gradeBadge.textContent = `${data.grade} — ${data.label}`;
-    gradeBadge.className = `grade-badge grade-${data.grade}`;
+    gradeBadge.textContent = `Grade ${data.grade} — ${cleanLabel}`;
+    gradeBadge.className = `score-grade-badge grade-${data.grade}`;
   }
 
-  // Qualitative summary text
   if (scoreQualitative) {
-    if (score >= 80) {
-      scoreQualitative.textContent = "High Compatibility — Strong alignment with key requirements";
-    } else if (score >= 60) {
-      scoreQualitative.textContent = "Good Alignment — Strong foundation with minor keyword gaps";
-    } else if (score >= 40) {
-      scoreQualitative.textContent = "Moderate Alignment — Significant domain gaps to address";
-    } else {
-      scoreQualitative.textContent = "Low Alignment — Recommend substantial tailoring for this position";
-    }
+    if (score >= 80) scoreQualitative.textContent = "High Compatibility";
+    else if (score >= 60) scoreQualitative.textContent = "Good Alignment";
+    else if (score >= 40) scoreQualitative.textContent = "Moderate Alignment";
+    else scoreQualitative.textContent = "Low Alignment";
   }
 }
 
-/* ── 4 Quick Stat Metric Tiles ────────────────────────────────────────────── */
-function renderQuickMetrics(data) {
+/* 4 Metrics Strip */
+function renderMetricsStrip(data) {
   const statScore = document.getElementById("statScore");
   const statKw = document.getElementById("statKw");
   const statMissingCount = document.getElementById("statMissingCount");
-  const statGrade = document.getElementById("statGrade");
+  const statSkillCount = document.getElementById("statSkillCount");
 
   if (statScore) statScore.textContent = `${data.score}%`;
   if (statKw) statKw.textContent = data.total_matched;
-  if (statMissingCount) {
-    statMissingCount.textContent = (data.missing_keywords || []).length;
+  if (statMissingCount) statMissingCount.textContent = (data.missing_keywords || []).length;
+  if (statSkillCount) {
+    statSkillCount.textContent = data.resume_summary ? (data.resume_summary.skill_count || 0) : 0;
   }
-  if (statGrade) statGrade.textContent = data.grade;
 }
 
-/* ── Matched & Missing Keywords Rendering ─────────────────────────────────── */
-function renderKeywordsSplit(data) {
+/* Keyword Lists */
+function renderKeywords(data) {
   // Matched Keywords
   const matchedContainer = document.getElementById("matchedKeywords");
   const matchedBadge = document.getElementById("matchedCountBadge");
   const matchedList = data.matched_keywords || [];
 
-  if (matchedBadge) {
-    matchedBadge.textContent = `${matchedList.length} matched`;
-  }
+  if (matchedBadge) matchedBadge.textContent = matchedList.length;
 
   if (matchedContainer) {
     matchedContainer.innerHTML = "";
     if (matchedList.length === 0) {
-      matchedContainer.innerHTML = '<span class="kw-empty">No significant common keywords identified.</span>';
+      matchedContainer.innerHTML = '<span class="kw-none">No shared domain keywords identified.</span>';
     } else {
-      matchedList.forEach((kw, index) => {
-        const chip = document.createElement("span");
-        chip.className = index < 4 ? "kw-tag kw-top" : "kw-tag";
-        chip.textContent = kw;
-        matchedContainer.appendChild(chip);
+      matchedList.forEach(kw => {
+        const pill = document.createElement("span");
+        pill.className = "kw-pill kw-matched";
+        pill.textContent = kw;
+        matchedContainer.appendChild(pill);
       });
     }
   }
@@ -495,26 +407,24 @@ function renderKeywordsSplit(data) {
   const missingBadge = document.getElementById("missingCountBadge");
   const missingList = data.missing_keywords || [];
 
-  if (missingBadge) {
-    missingBadge.textContent = `${missingList.length} missing`;
-  }
+  if (missingBadge) missingBadge.textContent = missingList.length;
 
   if (missingContainer) {
     missingContainer.innerHTML = "";
     if (missingList.length === 0) {
-      missingContainer.innerHTML = '<span class="kw-empty">🎉 No significant job keywords are missing! Excellent coverage.</span>';
+      missingContainer.innerHTML = '<span class="kw-none">No critical keywords are missing from the resume.</span>';
     } else {
       missingList.forEach(kw => {
-        const chip = document.createElement("span");
-        chip.className = "kw-tag kw-missing";
-        chip.textContent = kw;
-        missingContainer.appendChild(chip);
+        const pill = document.createElement("span");
+        pill.className = "kw-pill kw-missing";
+        pill.textContent = kw;
+        missingContainer.appendChild(pill);
       });
     }
   }
 }
 
-/* ── Recommendations List Rendering ───────────────────────────────────────── */
+/* Suggestions List (Clean numbered rows) */
 function renderSuggestions(suggestions) {
   const listEl = document.getElementById("suggestionsList");
   if (!listEl) return;
@@ -524,32 +434,22 @@ function renderSuggestions(suggestions) {
 
   if (items.length === 0) {
     const li = document.createElement("li");
-    li.className = "suggestion-item";
-    li.innerHTML = '<span class="suggestion-bullet-icon">✨</span><div>No critical gaps detected — your resume structure and phrasing closely mirror the job requirements.</div>';
+    li.className = "suggestion-row";
+    li.innerHTML = '<span class="suggestion-num">1.</span><span>No critical suggestions. The resume vocabulary aligns well with the job requirements.</span>';
     listEl.appendChild(li);
     return;
   }
 
-  items.forEach(text => {
+  items.forEach((item, index) => {
+    const cleanText = stripEmojis(item);
     const li = document.createElement("li");
-    li.className = "suggestion-item";
-
-    // Extract leading emoji if present, else provide a standard icon
-    const iconMatch = text.match(/^([\p{Emoji}]+)\s*/u);
-    let icon = "💡";
-    let content = text;
-
-    if (iconMatch) {
-      icon = iconMatch[1];
-      content = text.substring(iconMatch[0].length);
-    }
-
-    li.innerHTML = `<span class="suggestion-bullet-icon">${icon}</span><div>${content}</div>`;
+    li.className = "suggestion-row";
+    li.innerHTML = `<span class="suggestion-num">${index + 1}.</span><span>${cleanText}</span>`;
     listEl.appendChild(li);
   });
 }
 
-/* ── Resume Structural Insights Rendering ─────────────────────────────────── */
+/* Resume Summary & Insights */
 function renderResumeSummary(summary) {
   if (!summary) return;
 
@@ -569,13 +469,13 @@ function renderResumeSummary(summary) {
     const sections = summary.detected_sections || [];
     if (sections.length > 0) {
       sections.forEach(sec => {
-        const badge = document.createElement("span");
-        badge.className = "section-badge";
-        badge.innerHTML = `<span>✓</span><span>${sec}</span>`;
-        sectionsEl.appendChild(badge);
+        const tag = document.createElement("span");
+        tag.className = "section-tag";
+        tag.textContent = sec;
+        sectionsEl.appendChild(tag);
       });
     } else {
-      sectionsEl.innerHTML = '<span class="kw-empty">No standard section headers detected. Consider adding Experience, Education, and Skills.</span>';
+      sectionsEl.innerHTML = '<span class="kw-none">No standard section headers detected.</span>';
     }
   }
 
@@ -585,13 +485,13 @@ function renderResumeSummary(summary) {
     const skills = summary.detected_skills || [];
     if (skills.length > 0) {
       skills.forEach(skill => {
-        const tag = document.createElement("span");
-        tag.className = "kw-tag kw-skill";
-        tag.textContent = skill;
-        skillsEl.appendChild(tag);
+        const pill = document.createElement("span");
+        pill.className = "kw-pill kw-neutral";
+        pill.textContent = skill;
+        skillsEl.appendChild(pill);
       });
     } else {
-      skillsEl.innerHTML = '<span class="kw-empty">No specific technical keywords from dictionary detected in resume.</span>';
+      skillsEl.innerHTML = '<span class="kw-none">No recognized technical skills found.</span>';
     }
   }
 }

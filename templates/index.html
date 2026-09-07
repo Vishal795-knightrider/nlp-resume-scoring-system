@@ -3,332 +3,211 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ResumeFit — AI Resume Intelligence &amp; Fitness Scoring</title>
-  <meta name="description" content="Evaluate how accurately your resume matches any job description. Uncover skill gaps, missing keywords, and actionable suggestions powered by TF-IDF &amp; Cosine Similarity."/>
-  
-  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <title>ResumeFit — Resume Fitness Scoring System</title>
+  <meta name="description" content="Technical resume matching engine powered by TF-IDF and cosine similarity. Identify vocabulary alignment, keyword gaps, and actionable resume adjustments."/>
+
+  <!-- Clean Typography: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-  
-  <!-- Production Stylesheet -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Application Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
 </head>
 <body>
 
-  <div class="page-background"></div>
+  <div class="grid-bg"></div>
 
-  <!-- ── Sticky Navbar ─────────────────────────────────────────────────────── -->
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <a href="#" class="brand-link" aria-label="ResumeFit Home">
-        <div class="brand-icon-wrapper">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <path d="M9 15l2 2 4-4"></path>
-          </svg>
-        </div>
-        <div class="brand-text-group">
-          <div class="brand-name">Resume<span>Fit</span></div>
-          <span class="brand-subtitle">AI Resume Intelligence</span>
-        </div>
+  <!-- ── Navigation ───────────────────────────────────────────────────────── -->
+  <nav class="site-nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <span class="brand-title">ResumeFit</span>
+        <span class="brand-tag">AI Resume Intelligence</span>
       </a>
 
       <ul class="nav-links">
         <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
-        <li><a href="#workspace" class="nav-link">Insights</a></li>
-        <li><a href="#workspace" class="nav-cta">Analyze Resume →</a></li>
+        <li><a href="#workspace" class="nav-btn">Analyze</a></li>
       </ul>
     </div>
   </nav>
 
-  <div class="app-wrapper">
+  <div class="container">
 
-    <!-- ── SaaS Hero Section ────────────────────────────────────────────────── -->
-    <header class="hero-section">
+    <!-- ── Hero Section ─────────────────────────────────────────────────────── -->
+    <header class="hero">
       <div class="hero-grid">
-        
-        <!-- Left: Copy & CTAs -->
-        <div class="hero-content">
-          <div class="hero-badge-container">
-            <div class="hero-badge">
-              <span class="hero-badge-pulse"></span>
-              <span>AI-Powered Resume Analysis</span>
-            </div>
-          </div>
-
-          <h1 class="hero-title">
-            Know how well your resume fits the <span class="hero-title-gradient">job</span>.
-          </h1>
-
-          <p class="hero-description">
-            Analyze your resume against any job description and discover where you match, where you're missing, and what you can improve.
+        <div class="hero-text-col">
+          <div class="hero-label">Resume Analysis</div>
+          <h1 class="hero-heading">Know how well your resume matches a job.</h1>
+          <p class="hero-subtext">
+            Analyze your resume against a job description and identify matching skills, missing keywords and areas for improvement.
           </p>
-
           <div class="hero-actions">
-            <div class="hero-cta-group">
-              <a href="#workspace" class="hero-primary-btn">
-                <span>⚡ Analyze My Resume</span>
-              </a>
-              <a href="#how-it-works" class="hero-secondary-btn">
-                <span>Learn the Method</span>
-              </a>
-            </div>
-
-            <div class="hero-trust-row">
-              <span class="trust-item">✓ Free to use</span>
-              <span class="trust-separator">•</span>
-              <span class="trust-item">✓ Instant NLP scoring</span>
-              <span class="trust-separator">•</span>
-              <span class="trust-item">✓ No signup required</span>
-            </div>
+            <a href="#workspace" class="btn-primary">Analyze Resume</a>
+            <a href="#how-it-works" class="btn-secondary">How It Works</a>
           </div>
         </div>
 
-        <!-- Right: Interactive Preview Model Card -->
-        <div class="hero-preview-container">
-          <div class="preview-card-glow"></div>
-          <div class="hero-preview-card">
-            <div class="preview-header">
-              <div class="preview-title-wrap">
-                <span class="preview-dot"></span>
-                <span class="preview-card-title">Live Analysis Output</span>
+        <!-- Technical Process Preview -->
+        <div class="hero-diagram" aria-hidden="true">
+          <div class="diagram-header">Analysis Pipeline</div>
+          <div class="diagram-flow">
+            <div class="flow-row">
+              <div class="flow-node">
+                <div class="flow-node-title">Resume</div>
+                <div class="flow-node-desc">PDF or plaintext input</div>
               </div>
-              <span class="preview-tag">Preview Demo</span>
-            </div>
-
-            <div class="preview-match-overview">
-              <div class="preview-score-circle">
-                <svg class="preview-score-svg" viewBox="0 0 72 72">
-                  <circle class="preview-circle-bg" cx="36" cy="36" r="32"/>
-                  <circle class="preview-circle-fill" cx="36" cy="36" r="32"/>
-                </svg>
-                <span class="preview-score-text">87%</span>
-              </div>
-              <div class="preview-match-info">
-                <span class="preview-match-label">Evaluation Match</span>
-                <span class="preview-match-status">Excellent Fit 🎯</span>
+              <div class="flow-node">
+                <div class="flow-node-title">Job Description</div>
+                <div class="flow-node-desc">Target role requirements</div>
               </div>
             </div>
-
-            <div class="preview-metric-chips">
-              <div class="preview-metric-chip">
-                <div class="preview-metric-value">24</div>
-                <div class="preview-metric-label">Matched Terms</div>
-              </div>
-              <div class="preview-metric-chip">
-                <div class="preview-metric-value">6</div>
-                <div class="preview-metric-label">Missing Gaps</div>
-              </div>
-              <div class="preview-metric-chip">
-                <div class="preview-metric-value">18</div>
-                <div class="preview-metric-label">Skills Found</div>
-              </div>
+            <div class="flow-arrow-down">&darr;</div>
+            <div class="flow-node">
+              <div class="flow-node-title">NLP Vector Space Engine</div>
+              <div class="flow-node-desc">TF-IDF weighting and Cosine Similarity evaluation</div>
             </div>
-
-            <div class="preview-keywords-row">
-              <span class="preview-kw-label">Sample Keyword Gap Alignment</span>
-              <div class="preview-kw-pills">
-                <span class="preview-kw-pill">✓ Python</span>
-                <span class="preview-kw-pill">✓ Scikit-learn</span>
-                <span class="preview-kw-pill">✓ Docker</span>
-                <span class="preview-kw-pill missing">✕ Kubernetes</span>
-                <span class="preview-kw-pill missing">✕ CI/CD</span>
+            <div class="flow-arrow-down">&darr;</div>
+            <div class="flow-output">
+              <div>
+                <div class="flow-output-text">Match Analysis &amp; Keyword Gaps</div>
+                <div class="flow-output-meta">Score, matched vocabulary, missing terms</div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </header>
 
-    <!-- ── Sample Selection Bar ─────────────────────────────────────────────── -->
-    <section class="samples-section" aria-label="Sample Datasets">
-      <div class="samples-card">
-        <div class="samples-header-group">
-          <span class="samples-icon">💡</span>
-          <div>
-            <div class="samples-label">Test with verified benchmarks</div>
-            <div class="samples-hint">Load preconfigured resume and job description pairs:</div>
-          </div>
-        </div>
-        <div class="samples-button-row">
-          {% for s in samples %}
-          <button class="sample-pill-btn" onclick="loadSample({{ loop.index0 }})" type="button">
-            <span>📄</span>
-            <span>{{ s.name.split(' vs ')[0].strip() }}</span>
-            <span class="sample-badge-match {% if 'High' in s.expected %}sample-badge-high{% else %}sample-badge-low{% endif %}">
-              {{ s.expected }}
-            </span>
-          </button>
-          {% endfor %}
-        </div>
+    <!-- ── Benchmark / Sample Data Selection ────────────────────────────────── -->
+    <section class="benchmark-bar" aria-label="Sample Benchmarks">
+      <span class="benchmark-label">Try a sample:</span>
+      <div class="benchmark-items">
+        {% for s in samples %}
+        <button class="btn-sample" onclick="loadSample({{ loop.index0 }})" type="button">
+          {{ s.name.split(' vs ')[0].strip() }}
+        </button>
+        {% endfor %}
       </div>
     </section>
 
-    <!-- ── Error Toast Banner ───────────────────────────────────────────────── -->
-    <div id="errorMsg" class="alert-banner" role="alert">
-      <div class="alert-content">
-        <span>⚠️</span>
-        <span id="errorMsgText">Please provide both a resume and a job description.</span>
-      </div>
-      <button class="alert-close" onclick="dismissError()" aria-label="Dismiss message">✕</button>
+    <!-- ── Error Banner ─────────────────────────────────────────────────────── -->
+    <div id="errorMsg" class="error-banner" role="alert">
+      <span id="errorMsgText">Please provide both a resume and a job description.</span>
+      <button class="btn-dismiss" onclick="dismissError()" aria-label="Dismiss error">&times;</button>
     </div>
 
-    <!-- ── Main Workspace ───────────────────────────────────────────────────── -->
-    <main id="workspace" class="workspace-section">
-      <div class="section-header-compact">
-        <div class="section-eyebrow">Analysis Workspace</div>
-        <h2 class="section-heading-lg">Compare Your Resume &amp; Target Role</h2>
+    <!-- ── Analysis Workspace ───────────────────────────────────────────────── -->
+    <main id="workspace" class="workspace">
+      <div class="section-head">
+        <h2 class="section-title">Resume Analysis</h2>
+        <p class="section-desc">Compare your resume with a target job description.</p>
       </div>
 
-      <div class="workspace-grid">
+      <div class="workspace-panels">
 
-        <!-- Left Card: Resume Input & PDF Dropzone -->
-        <div class="workspace-card">
-          <div class="workspace-card-header">
-            <div class="card-title-group">
-              <span class="card-icon">📄</span>
-              <h3 class="card-title">Your Resume</h3>
-            </div>
-            <span class="card-meta-badge" id="resumeCharCount">0 characters</span>
+        <!-- Left: Resume Input -->
+        <div class="input-panel">
+          <div class="panel-head">
+            <span class="panel-title">Resume</span>
+            <span class="panel-counter" id="resumeCharCount">0 chars</span>
           </div>
 
-          <!-- PDF Upload Dropzone -->
-          <div class="upload-zone" id="uploadZone">
+          <!-- PDF Upload Area -->
+          <div class="pdf-dropzone" id="uploadZone">
             <input type="file" id="pdfInput" name="resume_pdf" accept=".pdf" onchange="onPdfChange(this)"/>
-            <div class="upload-icon-wrapper">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-            </div>
-            <div class="upload-primary-text">Drop your resume here, or browse</div>
-            <div class="upload-secondary-text">PDF format · up to 5MB · In-memory privacy extraction</div>
+            <div class="dropzone-label">Upload your resume</div>
+            <div class="dropzone-sub">Drag and drop a PDF here or choose a file.</div>
+            <div class="dropzone-btn">Choose PDF</div>
           </div>
 
-          <!-- Upload Status Pill -->
+          <!-- Upload Status -->
           <div class="upload-status" id="uploadStatus">
             <span id="uploadStatusText"></span>
-            <button class="clear-pdf" onclick="clearPdf()" type="button" title="Remove PDF">✕</button>
+            <button class="btn-remove-pdf" onclick="clearPdf()" type="button" title="Remove PDF">&times;</button>
           </div>
 
-          <div class="text-divider">
-            <span>Or paste resume text</span>
+          <div class="panel-divider">
+            <span>OR</span>
           </div>
 
-          <div class="textarea-wrapper">
-            <textarea id="resume" class="input-textarea"
-              placeholder="Paste raw resume text here...&#10;&#10;Include Summary, Technical Skills, Professional Experience, Education, and Projects for optimal scoring."
-              aria-label="Resume Content"></textarea>
-            <div class="textarea-footer">
-              <span>Supports plaintext &amp; markdown</span>
-              <button type="button" class="clear-text-btn" onclick="clearResumeText()">Clear</button>
+          <div class="textarea-container">
+            <textarea id="resume" class="editor-textarea"
+              placeholder="Paste resume text here. Include experience, skills, education, and projects."
+              aria-label="Resume Text"></textarea>
+            <div class="panel-footer">
+              <button type="button" class="btn-clear" onclick="clearResumeText()">Clear</button>
             </div>
           </div>
         </div>
 
-        <!-- Right Card: Job Description Input -->
-        <div class="workspace-card">
-          <div class="workspace-card-header">
-            <div class="card-title-group">
-              <span class="card-icon">💼</span>
-              <h3 class="card-title">Target Job Description</h3>
-            </div>
-            <span class="card-meta-badge" id="jdCharCount">0 characters</span>
+        <!-- Right: Job Description Input -->
+        <div class="input-panel">
+          <div class="panel-head">
+            <span class="panel-title">Job Description</span>
+            <span class="panel-counter" id="jdCharCount">0 chars</span>
           </div>
 
-          <div class="textarea-wrapper">
-            <textarea id="jd" class="input-textarea tall"
-              placeholder="Paste the target job description here...&#10;&#10;Include required qualifications, primary responsibilities, key technical tools, and role expectations."
-              aria-label="Job Description Content"></textarea>
-            <div class="textarea-footer">
-              <span>Paste directly from LinkedIn, Indeed, or company careers page</span>
-              <button type="button" class="clear-text-btn" onclick="clearJdText()">Clear</button>
+          <div class="textarea-container">
+            <textarea id="jd" class="editor-textarea tall"
+              placeholder="Paste the target job description here."
+              aria-label="Job Description Text"></textarea>
+            <div class="panel-footer">
+              <button type="button" class="btn-clear" onclick="clearJdText()">Clear</button>
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Analysis CTA & Loading Progress Indicator -->
-      <div class="analysis-cta-container">
-        <button id="analyzeBtn" class="analyze-button" onclick="analyze()" type="button">
-          <span>⚡ Analyze Match</span>
+      <!-- Action Button & Simple Loading State -->
+      <div class="workspace-actions">
+        <button id="analyzeBtn" class="btn-analyze" onclick="analyze()" type="button">
+          Analyze Resume
         </button>
 
-        <!-- Multi-step animated progress state -->
-        <div class="analysis-loader" id="analysisLoader">
-          <div class="loader-header">
-            <div class="spinner"></div>
-            <span>Evaluating Resume Alignment...</span>
-          </div>
-          <ul class="loader-steps">
-            <li class="loader-step active" id="step1">
-              <span class="step-icon">→</span>
-              <span>Parsing and tokenizing resume text</span>
-            </li>
-            <li class="loader-step" id="step2">
-              <span class="step-icon">○</span>
-              <span>Vectorizing vocabulary via TF-IDF</span>
-            </li>
-            <li class="loader-step" id="step3">
-              <span class="step-icon">○</span>
-              <span>Measuring geometric Cosine Similarity</span>
-            </li>
-            <li class="loader-step" id="step4">
-              <span class="step-icon">○</span>
-              <span>Computing keyword gaps &amp; recommendations</span>
-            </li>
-          </ul>
+        <div class="loading-indicator" id="analysisLoader">
+          <div class="loading-spinner"></div>
+          <span>Analyzing resume and job description...</span>
         </div>
       </div>
     </main>
 
-    <!-- ── Empty State (visible before first run) ────────────────────────────── -->
-    <div class="results-empty-state" id="emptyState">
-      <div class="empty-state-icon">📊</div>
-      <h3 class="empty-state-title">Your resume analysis will appear here</h3>
+    <!-- ── Empty State ──────────────────────────────────────────────────────── -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-state-heading">Analysis results will appear here</div>
       <p class="empty-state-text">
-        Upload your resume or paste text, supply a target job description, and click <strong>Analyze Match</strong> to receive your fitness score and keyword breakdown.
+        Upload or paste your resume and enter a target job description above, then select Analyze Resume.
       </p>
     </div>
 
-    <!-- ── Dynamic Results Dashboard (Revealed upon analysis) ────────────────── -->
+    <!-- ── Results Section ──────────────────────────────────────────────────── -->
     <section id="results" aria-label="Analysis Results">
 
-      <div class="results-header-banner">
-        <div class="results-heading-group">
-          <span class="results-eyebrow">Analysis Complete</span>
-          <h2 class="results-main-heading">Resume Fitness Report</h2>
-        </div>
-        <span class="timestamp-badge" id="resultsTimestamp">Computed just now</span>
+      <div class="results-header">
+        <h2 class="results-title">Resume Match</h2>
+        <span class="results-meta" id="resultsTimestamp">Computed</span>
       </div>
 
-      <!-- Score Hero Card with Circular SVG Progress Ring -->
-      <div class="score-hero-card">
-        <div class="score-hero-grid">
+      <!-- Score Block -->
+      <div class="score-overview-block">
+        <div class="score-overview-grid">
           
-          <div class="score-gauge-wrapper">
-            <svg class="score-gauge-svg" viewBox="0 0 150 150">
-              <circle class="gauge-track" cx="75" cy="75" r="65"/>
-              <circle class="gauge-progress" id="scoreGaugeProgress" cx="75" cy="75" r="65"/>
+          <div class="score-gauge">
+            <svg viewBox="0 0 100 100">
+              <circle class="gauge-base" cx="50" cy="50" r="45"/>
+              <circle class="gauge-fill" id="scoreGaugeProgress" cx="50" cy="50" r="45"/>
             </svg>
-            <div class="gauge-center-content">
-              <div class="score-number-display" id="scoreDisplay">0%</div>
-              <div class="score-number-label">Fit Score</div>
-            </div>
+            <span class="score-gauge-number" id="scoreDisplay">0%</span>
           </div>
 
-          <div class="score-details-group">
-            <div class="score-badge-row">
-              <div class="grade-badge" id="gradeBadge">Grade —</div>
-            </div>
-            <div class="score-qualitative-text" id="scoreQualitative">Evaluating overall fit...</div>
-            <p class="score-secondary-explanation">
-              This score represents the mathematical cosine similarity between your resume terms and the job description requirements, weighted by term frequency-inverse document frequency (TF-IDF).
+          <div class="score-summary-details">
+            <div class="score-grade-badge" id="gradeBadge">Grade -</div>
+            <div class="score-desc-title" id="scoreQualitative">Evaluating match...</div>
+            <p class="score-desc-body">
+              This score measures the Cosine Similarity between your resume and the job description based on TF-IDF term weights.
             </p>
             <div class="bar-wrap">
               <div class="bar-fill" id="barFill"></div>
@@ -338,195 +217,153 @@
         </div>
       </div>
 
-      <!-- 4 Quick Stats Grid -->
-      <div class="stats-grid-row">
-        <div class="stat-metric-card">
-          <div class="metric-icon-box icon-blue">🎯</div>
-          <div class="metric-info">
-            <div class="stat-val" id="statScore">-</div>
-            <div class="stat-key">Match Score</div>
-          </div>
+      <!-- 4 Key Metrics -->
+      <div class="metrics-strip">
+        <div class="metric-box">
+          <div class="metric-label">Match Score</div>
+          <div class="metric-val" id="statScore">-</div>
         </div>
-
-        <div class="stat-metric-card">
-          <div class="metric-icon-box icon-green">✅</div>
-          <div class="metric-info">
-            <div class="stat-val" id="statKw">-</div>
-            <div class="stat-key">Matched Keywords</div>
-          </div>
+        <div class="metric-box">
+          <div class="metric-label">Matched Keywords</div>
+          <div class="metric-val" id="statKw">-</div>
         </div>
-
-        <div class="stat-metric-card">
-          <div class="metric-icon-box icon-rose">❌</div>
-          <div class="metric-info">
-            <div class="stat-val" id="statMissingCount">-</div>
-            <div class="stat-key">Missing Keywords</div>
-          </div>
+        <div class="metric-box">
+          <div class="metric-label">Missing Keywords</div>
+          <div class="metric-val" id="statMissingCount">-</div>
         </div>
-
-        <div class="stat-metric-card">
-          <div class="metric-icon-box icon-purple">🏆</div>
-          <div class="metric-info">
-            <div class="stat-val" id="statGrade">-</div>
-            <div class="stat-key">Overall Grade</div>
-          </div>
+        <div class="metric-box">
+          <div class="metric-label">Skills Detected</div>
+          <div class="metric-val" id="statSkillCount">-</div>
         </div>
       </div>
 
-      <!-- Keywords Split Analysis: Matched vs Missing -->
-      <div class="keywords-split-grid">
+      <!-- Keyword Analysis Columns -->
+      <div class="keywords-layout">
         
-        <!-- Matched Keywords Panel -->
-        <div class="dashboard-panel">
-          <div class="panel-header-row">
-            <div class="panel-title-with-badge">
-              <span>✅</span>
-              <h3 class="panel-title-text">Matched Keywords</h3>
-            </div>
-            <span class="count-badge count-badge-green" id="matchedCountBadge">0 matched</span>
+        <div class="keyword-panel">
+          <div class="keyword-panel-head">
+            <span class="keyword-panel-title">Matched Keywords</span>
+            <span class="keyword-count-tag" id="matchedCountBadge">0</span>
           </div>
-          <p class="panel-subtext">
-            Terms with high relevance found in both your resume and the target job description:
-          </p>
-          <div class="keywords" id="matchedKeywords"></div>
+          <div class="keyword-panel-desc">Terms found in both the resume and job description:</div>
+          <div class="keyword-list" id="matchedKeywords"></div>
         </div>
 
-        <!-- Missing Keywords Panel -->
-        <div class="dashboard-panel">
-          <div class="panel-header-row">
-            <div class="panel-title-with-badge">
-              <span>❌</span>
-              <h3 class="panel-title-text">Missing Keywords</h3>
-            </div>
-            <span class="count-badge count-badge-rose" id="missingCountBadge">0 missing</span>
+        <div class="keyword-panel">
+          <div class="keyword-panel-head">
+            <span class="keyword-panel-title">Missing Keywords</span>
+            <span class="keyword-count-tag" id="missingCountBadge">0</span>
           </div>
-          <p class="panel-subtext">
-            These terms appear in the job description but were not detected strongly in your resume:
-          </p>
-          <div class="keywords" id="missingKeywords"></div>
+          <div class="keyword-panel-desc">Important terms present in the job description but absent from the resume:</div>
+          <div class="keyword-list" id="missingKeywords"></div>
         </div>
 
       </div>
 
-      <!-- Smart Improvement Suggestions -->
-      <div class="suggestions-panel">
-        <div class="panel-header-row">
-          <div class="panel-title-with-badge">
-            <span>💡</span>
-            <h3 class="panel-title-text">How to Improve Your Resume</h3>
-          </div>
-        </div>
-        <p class="panel-subtext">
-          Actionable recommendations derived from your vocabulary alignment, section coverage, and keyword gaps:
-        </p>
+      <!-- Suggestions Section -->
+      <div class="suggestions-section">
+        <div class="suggestions-title">Suggestions</div>
+        <div class="suggestions-subtitle">Actionable recommendations based on detected keyword gaps:</div>
         <ul class="suggestions-list" id="suggestionsList"></ul>
       </div>
 
       <!-- Resume Insights Panel -->
-      <div class="insights-panel">
-        <div class="panel-header-row">
-          <div class="panel-title-with-badge">
-            <span>📊</span>
-            <h3 class="panel-title-text">Resume Structural Insights</h3>
-          </div>
-        </div>
-        <p class="panel-subtext">
-          Text metrics, recognized resume sections, and detected technical proficiencies:
-        </p>
+      <div class="insights-section">
+        <div class="insights-title">Resume Insights</div>
+        <div class="insights-subtitle">Structural breakdown and detected proficiencies:</div>
 
-        <div class="summary-stats-strip">
-          <div class="summary-stat-box">
-            <div class="summary-stat-val" id="summaryWordCount">-</div>
-            <div class="summary-stat-key">Word Count</div>
+        <div class="insights-grid">
+          <div class="insight-metric-box">
+            <div class="insight-metric-val" id="summaryWordCount">-</div>
+            <div class="insight-metric-label">Word Count</div>
           </div>
-          <div class="summary-stat-box">
-            <div class="summary-stat-val" id="summarySkillCount">-</div>
-            <div class="summary-stat-key">Skills Detected</div>
+          <div class="insight-metric-box">
+            <div class="insight-metric-val" id="summarySkillCount">-</div>
+            <div class="insight-metric-label">Detected Skills</div>
           </div>
-          <div class="summary-stat-box">
-            <div class="summary-stat-val" id="summaryCharCount">-</div>
-            <div class="summary-stat-key">Total Characters</div>
+          <div class="insight-metric-box">
+            <div class="insight-metric-val" id="summaryCharCount">-</div>
+            <div class="insight-metric-label">Character Count</div>
           </div>
         </div>
 
-        <div class="insights-subheading">Detected Resume Sections</div>
-        <div class="section-badges" id="summarySections"></div>
+        <div class="insights-group-label">Detected Sections</div>
+        <div class="section-tag-list" id="summarySections"></div>
 
-        <div class="insights-subheading" style="margin-top: 1.5rem;">Identified Technical Skills</div>
-        <div class="keywords" id="summarySkills"></div>
+        <div class="insights-group-label">Detected Skills</div>
+        <div class="keyword-list" id="summarySkills"></div>
       </div>
 
     </section>
 
-    <!-- ── "How It Works" Section ───────────────────────────────────────────── -->
-    <section class="explainer-section" id="how-it-works">
-      <div class="explainer-header">
-        <div class="section-eyebrow">Algorithmic Architecture</div>
-        <h2>How ResumeFit Analyzes Your Resume</h2>
-        <p>Built with robust natural language processing and vector space geometry — zero hallucination, pure mathematical scoring.</p>
+    <!-- ── How It Works ─────────────────────────────────────────────────────── -->
+    <section class="how-it-works" id="how-it-works">
+      <div class="how-header">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-desc">The system compares your resume and job description using natural language processing techniques.</p>
       </div>
 
-      <div class="explainer-grid">
-        <div class="explainer-card">
-          <div class="exp-icon-box">📄</div>
-          <h3>In-Memory PDF Parsing</h3>
-          <p>Extracts text page-by-page directly in memory via <code>pypdf</code>. Your documents are never permanently stored on server disk.</p>
+      <div class="steps-grid">
+        <div class="step-box">
+          <div class="step-num">01</div>
+          <div class="step-title">Resume Text Extraction</div>
+          <p class="step-text">Extracts text page-by-page directly in memory using pypdf. No uploaded files are written to disk.</p>
         </div>
 
-        <div class="explainer-card">
-          <div class="exp-icon-box">🧹</div>
-          <h3>Text Preprocessing</h3>
-          <p>Normalizes casing, strips non-alphabetical punctuation, and removes high-frequency English stopwords to isolate domain signals.</p>
+        <div class="step-box">
+          <div class="step-num">02</div>
+          <div class="step-title">Text Preprocessing</div>
+          <p class="step-text">Converts text to lowercase, removes punctuation and filters common English stopwords.</p>
         </div>
 
-        <div class="explainer-card">
-          <div class="exp-icon-box">📐</div>
-          <h3>TF-IDF Vectorization</h3>
-          <p>Weights terms based on Term Frequency and Inverse Document Frequency, magnifying high-impact domain competencies over common filler words.</p>
+        <div class="step-box">
+          <div class="step-num">03</div>
+          <div class="step-title">TF-IDF Vectorization</div>
+          <p class="step-text">Calculates term frequency and inverse document frequency weights across the shared vocabulary.</p>
         </div>
 
-        <div class="explainer-card">
-          <div class="exp-icon-box">🌐</div>
-          <h3>Cosine Similarity Metric</h3>
-          <p>Computes the geometric cosine of the angle between resume and JD multidimensional vectors, providing length-independent matching.</p>
+        <div class="step-box">
+          <div class="step-num">04</div>
+          <div class="step-title">Cosine Similarity</div>
+          <p class="step-text">Measures the cosine angle between the resume and job vectors in multi-dimensional space.</p>
         </div>
 
-        <div class="explainer-card">
-          <div class="exp-icon-box">🔍</div>
-          <h3>Keyword Gap Analysis</h3>
-          <p>Performs set-theoretic differential analysis to spotlight critical qualifications present in the JD but missing in your resume.</p>
+        <div class="step-box">
+          <div class="step-num">05</div>
+          <div class="step-title">Keyword Comparison</div>
+          <p class="step-text">Identifies overlapping terms and isolates significant job keywords missing from your resume.</p>
         </div>
 
-        <div class="explainer-card">
-          <div class="exp-icon-box">💡</div>
-          <h3>Heuristic Recommendations</h3>
-          <p>Synthesizes structural section coverage, score thresholds, and missing skills into actionable suggestions to optimize ATS pass rates.</p>
+        <div class="step-box">
+          <div class="step-num">06</div>
+          <div class="step-title">Resume Suggestions</div>
+          <p class="step-text">Generates targeted suggestions based on score thresholds, missing technical skills and structure.</p>
         </div>
       </div>
     </section>
 
   </div>
 
-  <!-- ── SaaS Footer ───────────────────────────────────────────────────────── -->
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
   <footer class="site-footer">
-    <div class="app-wrapper">
-      <div class="footer-content">
-        <div class="footer-brand-info">
-          <strong>ResumeFit · AI Resume Intelligence</strong>
-          <span class="footer-copy">Natural Language Processing Resume Scoring &amp; Gap Analysis</span>
-        </div>
-        <div class="footer-tags">
-          <span class="footer-tech-tag">Python</span>
-          <span class="footer-tech-tag">scikit-learn</span>
-          <span class="footer-tech-tag">pypdf</span>
-          <span class="footer-tech-tag">Flask</span>
-          <span class="footer-tech-tag">TF-IDF &amp; Cosine</span>
-        </div>
+    <div class="container footer-inner">
+      <div>
+        <span class="footer-brand">ResumeFit</span>
+        <span class="footer-meta"> &middot; AI Resume Intelligence</span>
+      </div>
+      <div class="footer-tech">
+        <span>Python</span>
+        <span>&middot;</span>
+        <span>Flask</span>
+        <span>&middot;</span>
+        <span>scikit-learn</span>
+        <span>&middot;</span>
+        <span>pypdf</span>
       </div>
     </div>
   </footer>
 
-  <!-- Production Client Script -->
+  <!-- Application Script -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
