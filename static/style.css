@@ -6,7 +6,7 @@
 
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --bg-page: #F9FAFB;
+  --bg-page: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-subtle: #F3F4F6;
   --bg-hover: #E5E7EB;
@@ -58,25 +58,13 @@ html {
 }
 
 body {
-  background-color: var(--bg-page);
+  background: #F8FAFC;
   color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.5;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-/* Subtle, restrained background grid */
-.grid-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
 }
 
 .container {
