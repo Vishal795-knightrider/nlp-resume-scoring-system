@@ -3,549 +3,530 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resume Fitness Analyzer v3</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
-  <style>
-    /* ── Design tokens ─────────────────────────────────────────────────────── */
-    :root {
-      --bg:       #0a0a0f;
-      --surface:  #13131c;
-      --card:     #1a1a27;
-      --border:   #2a2a3d;
-      --accent:   #6c63ff;
-      --accent2:  #00d4aa;
-      --accent3:  #ff6584;
-      --warn:     #ffb347;
-      --text:     #e8e8f0;
-      --muted:    #7a7a9a;
-      --mono:     'Space Mono', monospace;
-      --sans:     'Outfit', sans-serif;
-      --radius:   12px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Background grid */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 48px 48px;
-      opacity: 0.25;
-    }
-
-    .wrapper {
-      position: relative; z-index: 1;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 5rem;
-    }
-
-    /* ── Header ────────────────────────────────────────────────────────────── */
-    header { text-align: center; padding: 3rem 0 2rem; }
-
-    .badge {
-      display: inline-block;
-      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.15em;
-      color: var(--accent2);
-      background: rgba(0,212,170,0.1);
-      border: 1px solid rgba(0,212,170,0.3);
-      border-radius: 20px; padding: 0.3rem 0.9rem;
-      margin-bottom: 1.2rem;
-    }
-
-    h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1;
-      background: linear-gradient(135deg, #fff 30%, var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      margin-top: 0.7rem; color: var(--muted);
-      font-size: 1rem; font-weight: 300;
-    }
-
-    /* ── Sample buttons ────────────────────────────────────────────────────── */
-    .samples-bar {
-      display: flex; align-items: center; gap: 0.6rem;
-      flex-wrap: wrap; justify-content: center;
-      margin: 1.8rem 0 1.2rem;
-    }
-    .samples-bar span { color: var(--muted); font-size: 0.82rem; font-family: var(--mono); }
-    .sample-btn {
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); padding: 0.4rem 0.9rem;
-      border-radius: 6px; font-family: var(--sans); font-size: 0.82rem;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .sample-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── Input grid ────────────────────────────────────────────────────────── */
-    .grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 1.2rem; margin-top: 1rem;
-    }
-    @media(max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-
-    .panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.4rem;
-    }
-
-    .panel-label {
-      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em;
-      color: var(--accent); margin-bottom: 0.75rem;
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .panel-label::before {
-      content: ''; display: block; width: 6px; height: 6px;
-      border-radius: 50%; background: var(--accent);
-    }
-
-    textarea {
-      width: 100%; height: 240px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text);
-      font-family: var(--mono); font-size: 0.78rem; line-height: 1.65;
-      padding: 1rem; resize: vertical; outline: none;
-      transition: border-color 0.2s;
-    }
-    textarea:focus { border-color: var(--accent); }
-
-    /* ── PDF Upload zone ───────────────────────────────────────────────────── */
-    .upload-zone {
-      border: 2px dashed var(--border); border-radius: 8px;
-      padding: 1rem 1.2rem; text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative; margin-bottom: 0;
-    }
-    .upload-zone:hover, .upload-zone.drag-over {
-      border-color: var(--accent2); background: rgba(0,212,170,0.05);
-    }
-    .upload-zone input[type="file"] {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      opacity: 0; cursor: pointer;
-    }
-    .upload-icon { font-size: 1.4rem; margin-bottom: 0.25rem; }
-    .upload-hint { font-size: 0.76rem; color: var(--muted); font-family: var(--mono); }
-    .upload-hint strong { color: var(--accent2); }
-
-    .upload-status {
-      display: none; margin-top: 0.6rem;
-      font-family: var(--mono); font-size: 0.73rem;
-      padding: 0.3rem 0.8rem; border-radius: 20px;
-      border: 1px solid var(--border); color: var(--text);
-      background: var(--surface);
-      align-items: center; gap: 0.5rem; justify-content: space-between;
-    }
-    .upload-status.visible  { display: flex; }
-    .upload-status.success  { border-color: rgba(0,212,170,.4);  color: var(--accent2); background: rgba(0,212,170,.08); }
-    .upload-status.error    { border-color: rgba(255,101,132,.4); color: var(--accent3); background: rgba(255,101,132,.08); }
-    .upload-status.loading  { border-color: rgba(108,99,255,.4);  color: var(--accent);  background: rgba(108,99,255,.08); }
-
-    .clear-pdf {
-      background: none; border: none; cursor: pointer;
-      color: inherit; font-size: 0.8rem; padding: 0; opacity: 0.7;
-    }
-    .clear-pdf:hover { opacity: 1; }
-
-    .or-divider {
-      display: flex; align-items: center; gap: 0.6rem; margin: 0.8rem 0;
-    }
-    .or-divider::before, .or-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .or-divider span {
-      font-family: var(--mono); font-size: 0.62rem;
-      color: var(--muted); letter-spacing: 0.1em;
-    }
-
-    /* ── Analyze button ────────────────────────────────────────────────────── */
-    .cta-row { text-align: center; margin: 1.4rem 0; }
-
-    #analyzeBtn {
-      background: linear-gradient(135deg, var(--accent), #8b84ff);
-      border: none; color: #fff;
-      font-family: var(--sans); font-size: 1rem; font-weight: 700;
-      letter-spacing: 0.04em; padding: 0.85rem 2.8rem;
-      border-radius: 50px; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 24px rgba(108,99,255,0.35);
-    }
-    #analyzeBtn:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,99,255,.5); }
-    #analyzeBtn:active { transform: translateY(0); }
-    #analyzeBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* ── Error message ─────────────────────────────────────────────────────── */
-    .error-msg {
-      background: rgba(255,101,132,.1); border: 1px solid rgba(255,101,132,.3);
-      color: var(--accent3); padding: 0.8rem 1.2rem;
-      border-radius: 8px; font-size: 0.9rem;
-      margin-bottom: 1rem; display: none;
-    }
-
-    /* ── Results wrapper ───────────────────────────────────────────────────── */
-    #results { display: none; }
-
-    /* ── Score card ────────────────────────────────────────────────────────── */
-    .score-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 2rem;
-      text-align: center; margin-bottom: 1.2rem;
-      position: relative; overflow: hidden;
-    }
-    .score-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-    }
-    .score-number {
-      font-size: clamp(3rem, 8vw, 5rem); font-weight: 900;
-      font-family: var(--mono); line-height: 1;
-    }
-    .score-label { color: var(--muted); margin-top: 0.3rem; font-size: 0.9rem; }
-
-    .grade-badge {
-      display: inline-block; font-family: var(--mono);
-      font-size: 1.1rem; font-weight: 700;
-      padding: 0.4rem 1.2rem; border-radius: 6px; margin-top: 1rem;
-    }
-    .grade-A { background: rgba(0,212,170,.15);  color: var(--accent2); border: 1px solid rgba(0,212,170,.3); }
-    .grade-B { background: rgba(108,99,255,.15); color: var(--accent);  border: 1px solid rgba(108,99,255,.3); }
-    .grade-C { background: rgba(255,200,80,.15); color: #ffc850;        border: 1px solid rgba(255,200,80,.3); }
-    .grade-D { background: rgba(255,150,50,.15); color: #ff9632;        border: 1px solid rgba(255,150,50,.3); }
-    .grade-F { background: rgba(255,101,132,.15);color: var(--accent3); border: 1px solid rgba(255,101,132,.3); }
-
-    .bar-wrap { background: var(--surface); border-radius: 999px; height: 10px; margin-top: 1.4rem; overflow: hidden; }
-    .bar-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s cubic-bezier(.16,1,.3,1); width: 0%; }
-
-    /* ── Stats row ─────────────────────────────────────────────────────────── */
-    .stats { display: flex; gap: 1rem; margin-bottom: 1.2rem; }
-    @media(max-width: 500px) { .stats { flex-wrap: wrap; } }
-
-    .stat-box {
-      flex: 1; background: var(--card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 1.1rem; text-align: center; min-width: 80px;
-    }
-    .stat-val { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-    .stat-key { font-size: 0.76rem; color: var(--muted); margin-top: 0.25rem; }
-
-    /* ── Shared result panel ───────────────────────────────────────────────── */
-    .result-panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.2rem;
-    }
-    .result-panel-title {
-      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em;
-      margin-bottom: 1rem;
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .result-panel-title::before {
-      content: ''; display: block; width: 6px; height: 6px; border-radius: 50%;
-    }
-
-    /* colour variants per panel */
-    .panel-green .result-panel-title { color: var(--accent2); }
-    .panel-green .result-panel-title::before { background: var(--accent2); }
-
-    .panel-red .result-panel-title   { color: var(--accent3); }
-    .panel-red .result-panel-title::before { background: var(--accent3); }
-
-    .panel-yellow .result-panel-title { color: var(--warn); }
-    .panel-yellow .result-panel-title::before { background: var(--warn); }
-
-    .panel-blue .result-panel-title   { color: var(--accent); }
-    .panel-blue .result-panel-title::before { background: var(--accent); }
-
-    /* ── Keyword tags ──────────────────────────────────────────────────────── */
-    .keywords { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-
-    .kw-tag {
-      font-family: var(--mono); font-size: 0.73rem;
-      background: rgba(108,99,255,.12); border: 1px solid rgba(108,99,255,.25);
-      color: #a8a3ff; padding: 0.28rem 0.7rem; border-radius: 5px;
-    }
-    .kw-top {
-      background: rgba(0,212,170,.12); border-color: rgba(0,212,170,.25);
-      color: var(--accent2);
-    }
-    /* Missing keywords — red tint */
-    .kw-missing {
-      background: rgba(255,101,132,.1); border-color: rgba(255,101,132,.3);
-      color: #ff8fa3;
-    }
-    /* Skills in summary — yellow tint */
-    .kw-skill {
-      background: rgba(255,179,71,.1); border-color: rgba(255,179,71,.3);
-      color: var(--warn);
-    }
-    .kw-empty { color: var(--muted); font-size: 0.84rem; }
-
-    /* ── Suggestions list ──────────────────────────────────────────────────── */
-    .suggestions-list {
-      list-style: none; display: flex; flex-direction: column; gap: 0.6rem;
-    }
-    .suggestion-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--warn);
-      border-radius: 6px; padding: 0.7rem 1rem;
-      font-size: 0.88rem; line-height: 1.55; color: var(--text);
-    }
-
-    /* ── Resume Summary ────────────────────────────────────────────────────── */
-    .summary-stats {
-      display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap;
-    }
-    .summary-stat {
-      flex: 1; min-width: 80px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 0.9rem; text-align: center;
-    }
-    .summary-stat-val {
-      font-family: var(--mono); font-size: 1.4rem; font-weight: 700; color: var(--accent2);
-    }
-    .summary-stat-key { font-size: 0.74rem; color: var(--muted); margin-top: 0.2rem; }
-
-    .summary-sub-label {
-      font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em;
-      color: var(--muted); margin: 0.9rem 0 0.45rem;
-    }
-
-    /* Section detection badges */
-    .section-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .section-badge {
-      font-family: var(--mono); font-size: 0.72rem;
-      background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.3);
-      color: var(--accent); padding: 0.25rem 0.65rem; border-radius: 20px;
-    }
-
-    /* ── How it works ──────────────────────────────────────────────────────── */
-    .explainer {
-      margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem;
-    }
-    .explainer h2 {
-      font-size: 1.2rem; font-weight: 700; margin-bottom: 1.2rem;
-      color: var(--muted); font-family: var(--mono);
-    }
-    .exp-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
-    }
-    .exp-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 1.2rem;
-    }
-    .exp-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
-    .exp-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--accent); }
-    .exp-card p  { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
-
-    footer {
-      text-align: center; margin-top: 3rem;
-      color: var(--muted); font-size: 0.78rem; font-family: var(--mono);
-    }
-  </style>
+  <title>ResumeFit — AI Resume Intelligence &amp; Fitness Scoring</title>
+  <meta name="description" content="Evaluate how accurately your resume matches any job description. Uncover skill gaps, missing keywords, and actionable suggestions powered by TF-IDF &amp; Cosine Similarity."/>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+  
+  <!-- Production Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
 </head>
 <body>
-<div class="wrapper">
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
-  <header>
-    <div class="badge">ML RESUME ANALYZER · v3</div>
-    <h1>Resume Fitness<br/>Scoring System</h1>
-    <p class="subtitle">TF-IDF · Cosine Similarity · Keyword Gap · Resume Insights</p>
-  </header>
+  <div class="page-background"></div>
 
-  <!-- ── Sample buttons ─────────────────────────────────────────────────── -->
-  <div class="samples-bar">
-    <span>try sample →</span>
-    {% for s in samples %}
-    <button class="sample-btn" onclick="loadSample({{ loop.index0 }})">
-      {{ s.name.split(' vs ')[0].strip() }}
-    </button>
-    {% endfor %}
-  </div>
+  <!-- ── Sticky Navbar ─────────────────────────────────────────────────────── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-link" aria-label="ResumeFit Home">
+        <div class="brand-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="M9 15l2 2 4-4"></path>
+          </svg>
+        </div>
+        <div class="brand-text-group">
+          <div class="brand-name">Resume<span>Fit</span></div>
+          <span class="brand-subtitle">AI Resume Intelligence</span>
+        </div>
+      </a>
 
-  <div id="errorMsg" class="error-msg"></div>
+      <ul class="nav-links">
+        <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="#workspace" class="nav-link">Insights</a></li>
+        <li><a href="#workspace" class="nav-cta">Analyze Resume →</a></li>
+      </ul>
+    </div>
+  </nav>
 
-  <!-- ── Input grid ─────────────────────────────────────────────────────── -->
-  <div class="grid">
+  <div class="app-wrapper">
 
-    <!-- LEFT: Resume panel with PDF upload + textarea fallback -->
-    <div class="panel">
-      <div class="panel-label">RESUME INPUT</div>
+    <!-- ── SaaS Hero Section ────────────────────────────────────────────────── -->
+    <header class="hero-section">
+      <div class="hero-grid">
+        
+        <!-- Left: Copy & CTAs -->
+        <div class="hero-content">
+          <div class="hero-badge-container">
+            <div class="hero-badge">
+              <span class="hero-badge-pulse"></span>
+              <span>AI-Powered Resume Analysis</span>
+            </div>
+          </div>
 
-      <!-- PDF Upload Zone -->
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" id="pdfInput" name="resume_pdf"
-               accept=".pdf" onchange="onPdfChange(this)"/>
-        <div class="upload-icon">📄</div>
-        <div class="upload-hint">
-          <strong>Click to upload PDF resume</strong><br/>
-          or drag &amp; drop · max 5 MB
+          <h1 class="hero-title">
+            Know how well your resume fits the <span class="hero-title-gradient">job</span>.
+          </h1>
+
+          <p class="hero-description">
+            Analyze your resume against any job description and discover where you match, where you're missing, and what you can improve.
+          </p>
+
+          <div class="hero-actions">
+            <div class="hero-cta-group">
+              <a href="#workspace" class="hero-primary-btn">
+                <span>⚡ Analyze My Resume</span>
+              </a>
+              <a href="#how-it-works" class="hero-secondary-btn">
+                <span>Learn the Method</span>
+              </a>
+            </div>
+
+            <div class="hero-trust-row">
+              <span class="trust-item">✓ Free to use</span>
+              <span class="trust-separator">•</span>
+              <span class="trust-item">✓ Instant NLP scoring</span>
+              <span class="trust-separator">•</span>
+              <span class="trust-item">✓ No signup required</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Preview Model Card -->
+        <div class="hero-preview-container">
+          <div class="preview-card-glow"></div>
+          <div class="hero-preview-card">
+            <div class="preview-header">
+              <div class="preview-title-wrap">
+                <span class="preview-dot"></span>
+                <span class="preview-card-title">Live Analysis Output</span>
+              </div>
+              <span class="preview-tag">Preview Demo</span>
+            </div>
+
+            <div class="preview-match-overview">
+              <div class="preview-score-circle">
+                <svg class="preview-score-svg" viewBox="0 0 72 72">
+                  <circle class="preview-circle-bg" cx="36" cy="36" r="32"/>
+                  <circle class="preview-circle-fill" cx="36" cy="36" r="32"/>
+                </svg>
+                <span class="preview-score-text">87%</span>
+              </div>
+              <div class="preview-match-info">
+                <span class="preview-match-label">Evaluation Match</span>
+                <span class="preview-match-status">Excellent Fit 🎯</span>
+              </div>
+            </div>
+
+            <div class="preview-metric-chips">
+              <div class="preview-metric-chip">
+                <div class="preview-metric-value">24</div>
+                <div class="preview-metric-label">Matched Terms</div>
+              </div>
+              <div class="preview-metric-chip">
+                <div class="preview-metric-value">6</div>
+                <div class="preview-metric-label">Missing Gaps</div>
+              </div>
+              <div class="preview-metric-chip">
+                <div class="preview-metric-value">18</div>
+                <div class="preview-metric-label">Skills Found</div>
+              </div>
+            </div>
+
+            <div class="preview-keywords-row">
+              <span class="preview-kw-label">Sample Keyword Gap Alignment</span>
+              <div class="preview-kw-pills">
+                <span class="preview-kw-pill">✓ Python</span>
+                <span class="preview-kw-pill">✓ Scikit-learn</span>
+                <span class="preview-kw-pill">✓ Docker</span>
+                <span class="preview-kw-pill missing">✕ Kubernetes</span>
+                <span class="preview-kw-pill missing">✕ CI/CD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ── Sample Selection Bar ─────────────────────────────────────────────── -->
+    <section class="samples-section" aria-label="Sample Datasets">
+      <div class="samples-card">
+        <div class="samples-header-group">
+          <span class="samples-icon">💡</span>
+          <div>
+            <div class="samples-label">Test with verified benchmarks</div>
+            <div class="samples-hint">Load preconfigured resume and job description pairs:</div>
+          </div>
+        </div>
+        <div class="samples-button-row">
+          {% for s in samples %}
+          <button class="sample-pill-btn" onclick="loadSample({{ loop.index0 }})" type="button">
+            <span>📄</span>
+            <span>{{ s.name.split(' vs ')[0].strip() }}</span>
+            <span class="sample-badge-match {% if 'High' in s.expected %}sample-badge-high{% else %}sample-badge-low{% endif %}">
+              {{ s.expected }}
+            </span>
+          </button>
+          {% endfor %}
         </div>
       </div>
+    </section>
 
-      <!-- Upload status pill -->
-      <div class="upload-status" id="uploadStatus">
-        <span id="uploadStatusText"></span>
-        <button class="clear-pdf" onclick="clearPdf()" title="Remove PDF">✕</button>
+    <!-- ── Error Toast Banner ───────────────────────────────────────────────── -->
+    <div id="errorMsg" class="alert-banner" role="alert">
+      <div class="alert-content">
+        <span>⚠️</span>
+        <span id="errorMsgText">Please provide both a resume and a job description.</span>
+      </div>
+      <button class="alert-close" onclick="dismissError()" aria-label="Dismiss message">✕</button>
+    </div>
+
+    <!-- ── Main Workspace ───────────────────────────────────────────────────── -->
+    <main id="workspace" class="workspace-section">
+      <div class="section-header-compact">
+        <div class="section-eyebrow">Analysis Workspace</div>
+        <h2 class="section-heading-lg">Compare Your Resume &amp; Target Role</h2>
       </div>
 
-      <div class="or-divider"><span>OR TYPE / PASTE BELOW</span></div>
+      <div class="workspace-grid">
 
-      <textarea id="resume"
-        placeholder="Paste your resume here...&#10;&#10;Include skills, experience, education, and projects.">
-      </textarea>
-    </div>
+        <!-- Left Card: Resume Input & PDF Dropzone -->
+        <div class="workspace-card">
+          <div class="workspace-card-header">
+            <div class="card-title-group">
+              <span class="card-icon">📄</span>
+              <h3 class="card-title">Your Resume</h3>
+            </div>
+            <span class="card-meta-badge" id="resumeCharCount">0 characters</span>
+          </div>
 
-    <!-- RIGHT: Job description panel -->
-    <div class="panel">
-      <div class="panel-label">JOB DESCRIPTION</div>
-      <textarea id="jd" style="height: 400px;"
-        placeholder="Paste the job description here...&#10;&#10;Include required skills, responsibilities, and qualifications.">
-      </textarea>
-    </div>
+          <!-- PDF Upload Dropzone -->
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="pdfInput" name="resume_pdf" accept=".pdf" onchange="onPdfChange(this)"/>
+            <div class="upload-icon-wrapper">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="upload-primary-text">Drop your resume here, or browse</div>
+            <div class="upload-secondary-text">PDF format · up to 5MB · In-memory privacy extraction</div>
+          </div>
 
-  </div>
+          <!-- Upload Status Pill -->
+          <div class="upload-status" id="uploadStatus">
+            <span id="uploadStatusText"></span>
+            <button class="clear-pdf" onclick="clearPdf()" type="button" title="Remove PDF">✕</button>
+          </div>
 
-  <!-- ── Analyze button ─────────────────────────────────────────────────── -->
-  <div class="cta-row">
-    <button id="analyzeBtn" onclick="analyze()">⚡ Analyze Match</button>
-  </div>
+          <div class="text-divider">
+            <span>Or paste resume text</span>
+          </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       RESULTS — hidden until analysis runs
-  ════════════════════════════════════════════════════════════════════════ -->
-  <div id="results">
+          <div class="textarea-wrapper">
+            <textarea id="resume" class="input-textarea"
+              placeholder="Paste raw resume text here...&#10;&#10;Include Summary, Technical Skills, Professional Experience, Education, and Projects for optimal scoring."
+              aria-label="Resume Content"></textarea>
+            <div class="textarea-footer">
+              <span>Supports plaintext &amp; markdown</span>
+              <button type="button" class="clear-text-btn" onclick="clearResumeText()">Clear</button>
+            </div>
+          </div>
+        </div>
 
-    <!-- Score card -->
-    <div class="score-card">
-      <div class="score-number" id="scoreDisplay">0%</div>
-      <div class="score-label">Fitness Score</div>
-      <div class="grade-badge" id="gradeBadge"></div>
-      <div class="bar-wrap"><div class="bar-fill" id="barFill"></div></div>
-    </div>
+        <!-- Right Card: Job Description Input -->
+        <div class="workspace-card">
+          <div class="workspace-card-header">
+            <div class="card-title-group">
+              <span class="card-icon">💼</span>
+              <h3 class="card-title">Target Job Description</h3>
+            </div>
+            <span class="card-meta-badge" id="jdCharCount">0 characters</span>
+          </div>
 
-    <!-- Stats row -->
-    <div class="stats">
-      <div class="stat-box">
-        <div class="stat-val" id="statScore">-</div>
-        <div class="stat-key">Match Score</div>
+          <div class="textarea-wrapper">
+            <textarea id="jd" class="input-textarea tall"
+              placeholder="Paste the target job description here...&#10;&#10;Include required qualifications, primary responsibilities, key technical tools, and role expectations."
+              aria-label="Job Description Content"></textarea>
+            <div class="textarea-footer">
+              <span>Paste directly from LinkedIn, Indeed, or company careers page</span>
+              <button type="button" class="clear-text-btn" onclick="clearJdText()">Clear</button>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="stat-box">
-        <div class="stat-val" id="statKw">-</div>
-        <div class="stat-key">Keywords Matched</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-val" id="statGrade">-</div>
-        <div class="stat-key">Grade</div>
-      </div>
-    </div>
 
-    <!-- ── Matched Keywords ──────────────────────────────────────────────── -->
-    <div class="result-panel panel-green">
-      <div class="result-panel-title">✅ MATCHED KEYWORDS</div>
-      <div class="keywords" id="matchedKeywords"></div>
-    </div>
+      <!-- Analysis CTA & Loading Progress Indicator -->
+      <div class="analysis-cta-container">
+        <button id="analyzeBtn" class="analyze-button" onclick="analyze()" type="button">
+          <span>⚡ Analyze Match</span>
+        </button>
 
-    <!-- ── Missing Keywords (NEW) ────────────────────────────────────────── -->
-    <div class="result-panel panel-red">
-      <div class="result-panel-title">❌ MISSING KEYWORDS</div>
-      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.8rem;">
-        These keywords appear in the job description but are absent from your resume.
+        <!-- Multi-step animated progress state -->
+        <div class="analysis-loader" id="analysisLoader">
+          <div class="loader-header">
+            <div class="spinner"></div>
+            <span>Evaluating Resume Alignment...</span>
+          </div>
+          <ul class="loader-steps">
+            <li class="loader-step active" id="step1">
+              <span class="step-icon">→</span>
+              <span>Parsing and tokenizing resume text</span>
+            </li>
+            <li class="loader-step" id="step2">
+              <span class="step-icon">○</span>
+              <span>Vectorizing vocabulary via TF-IDF</span>
+            </li>
+            <li class="loader-step" id="step3">
+              <span class="step-icon">○</span>
+              <span>Measuring geometric Cosine Similarity</span>
+            </li>
+            <li class="loader-step" id="step4">
+              <span class="step-icon">○</span>
+              <span>Computing keyword gaps &amp; recommendations</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- ── Empty State (visible before first run) ────────────────────────────── -->
+    <div class="results-empty-state" id="emptyState">
+      <div class="empty-state-icon">📊</div>
+      <h3 class="empty-state-title">Your resume analysis will appear here</h3>
+      <p class="empty-state-text">
+        Upload your resume or paste text, supply a target job description, and click <strong>Analyze Match</strong> to receive your fitness score and keyword breakdown.
       </p>
-      <div class="keywords" id="missingKeywords"></div>
     </div>
 
-    <!-- ── Smart Suggestions (NEW) ───────────────────────────────────────── -->
-    <div class="result-panel panel-yellow">
-      <div class="result-panel-title">💡 SMART SUGGESTIONS</div>
-      <ul class="suggestions-list" id="suggestionsList"></ul>
-    </div>
+    <!-- ── Dynamic Results Dashboard (Revealed upon analysis) ────────────────── -->
+    <section id="results" aria-label="Analysis Results">
 
-    <!-- ── Resume Summary (NEW) ──────────────────────────────────────────── -->
-    <div class="result-panel panel-blue">
-      <div class="result-panel-title">📊 RESUME SUMMARY</div>
+      <div class="results-header-banner">
+        <div class="results-heading-group">
+          <span class="results-eyebrow">Analysis Complete</span>
+          <h2 class="results-main-heading">Resume Fitness Report</h2>
+        </div>
+        <span class="timestamp-badge" id="resultsTimestamp">Computed just now</span>
+      </div>
 
-      <!-- Numeric stats -->
-      <div class="summary-stats">
-        <div class="summary-stat">
-          <div class="summary-stat-val" id="summaryWordCount">-</div>
-          <div class="summary-stat-key">Word Count</div>
-        </div>
-        <div class="summary-stat">
-          <div class="summary-stat-val" id="summarySkillCount">-</div>
-          <div class="summary-stat-key">Skills Detected</div>
-        </div>
-        <div class="summary-stat">
-          <div class="summary-stat-val" id="summaryCharCount">-</div>
-          <div class="summary-stat-key">Characters</div>
+      <!-- Score Hero Card with Circular SVG Progress Ring -->
+      <div class="score-hero-card">
+        <div class="score-hero-grid">
+          
+          <div class="score-gauge-wrapper">
+            <svg class="score-gauge-svg" viewBox="0 0 150 150">
+              <circle class="gauge-track" cx="75" cy="75" r="65"/>
+              <circle class="gauge-progress" id="scoreGaugeProgress" cx="75" cy="75" r="65"/>
+            </svg>
+            <div class="gauge-center-content">
+              <div class="score-number-display" id="scoreDisplay">0%</div>
+              <div class="score-number-label">Fit Score</div>
+            </div>
+          </div>
+
+          <div class="score-details-group">
+            <div class="score-badge-row">
+              <div class="grade-badge" id="gradeBadge">Grade —</div>
+            </div>
+            <div class="score-qualitative-text" id="scoreQualitative">Evaluating overall fit...</div>
+            <p class="score-secondary-explanation">
+              This score represents the mathematical cosine similarity between your resume terms and the job description requirements, weighted by term frequency-inverse document frequency (TF-IDF).
+            </p>
+            <div class="bar-wrap">
+              <div class="bar-fill" id="barFill"></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <!-- Detected sections -->
-      <div class="summary-sub-label">DETECTED SECTIONS</div>
-      <div class="section-badges" id="summarySections"></div>
+      <!-- 4 Quick Stats Grid -->
+      <div class="stats-grid-row">
+        <div class="stat-metric-card">
+          <div class="metric-icon-box icon-blue">🎯</div>
+          <div class="metric-info">
+            <div class="stat-val" id="statScore">-</div>
+            <div class="stat-key">Match Score</div>
+          </div>
+        </div>
 
-      <!-- Detected skills -->
-      <div class="summary-sub-label" style="margin-top:1rem;">DETECTED SKILLS</div>
-      <div class="keywords" id="summarySkills"></div>
-    </div>
+        <div class="stat-metric-card">
+          <div class="metric-icon-box icon-green">✅</div>
+          <div class="metric-info">
+            <div class="stat-val" id="statKw">-</div>
+            <div class="stat-key">Matched Keywords</div>
+          </div>
+        </div>
+
+        <div class="stat-metric-card">
+          <div class="metric-icon-box icon-rose">❌</div>
+          <div class="metric-info">
+            <div class="stat-val" id="statMissingCount">-</div>
+            <div class="stat-key">Missing Keywords</div>
+          </div>
+        </div>
+
+        <div class="stat-metric-card">
+          <div class="metric-icon-box icon-purple">🏆</div>
+          <div class="metric-info">
+            <div class="stat-val" id="statGrade">-</div>
+            <div class="stat-key">Overall Grade</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keywords Split Analysis: Matched vs Missing -->
+      <div class="keywords-split-grid">
+        
+        <!-- Matched Keywords Panel -->
+        <div class="dashboard-panel">
+          <div class="panel-header-row">
+            <div class="panel-title-with-badge">
+              <span>✅</span>
+              <h3 class="panel-title-text">Matched Keywords</h3>
+            </div>
+            <span class="count-badge count-badge-green" id="matchedCountBadge">0 matched</span>
+          </div>
+          <p class="panel-subtext">
+            Terms with high relevance found in both your resume and the target job description:
+          </p>
+          <div class="keywords" id="matchedKeywords"></div>
+        </div>
+
+        <!-- Missing Keywords Panel -->
+        <div class="dashboard-panel">
+          <div class="panel-header-row">
+            <div class="panel-title-with-badge">
+              <span>❌</span>
+              <h3 class="panel-title-text">Missing Keywords</h3>
+            </div>
+            <span class="count-badge count-badge-rose" id="missingCountBadge">0 missing</span>
+          </div>
+          <p class="panel-subtext">
+            These terms appear in the job description but were not detected strongly in your resume:
+          </p>
+          <div class="keywords" id="missingKeywords"></div>
+        </div>
+
+      </div>
+
+      <!-- Smart Improvement Suggestions -->
+      <div class="suggestions-panel">
+        <div class="panel-header-row">
+          <div class="panel-title-with-badge">
+            <span>💡</span>
+            <h3 class="panel-title-text">How to Improve Your Resume</h3>
+          </div>
+        </div>
+        <p class="panel-subtext">
+          Actionable recommendations derived from your vocabulary alignment, section coverage, and keyword gaps:
+        </p>
+        <ul class="suggestions-list" id="suggestionsList"></ul>
+      </div>
+
+      <!-- Resume Insights Panel -->
+      <div class="insights-panel">
+        <div class="panel-header-row">
+          <div class="panel-title-with-badge">
+            <span>📊</span>
+            <h3 class="panel-title-text">Resume Structural Insights</h3>
+          </div>
+        </div>
+        <p class="panel-subtext">
+          Text metrics, recognized resume sections, and detected technical proficiencies:
+        </p>
+
+        <div class="summary-stats-strip">
+          <div class="summary-stat-box">
+            <div class="summary-stat-val" id="summaryWordCount">-</div>
+            <div class="summary-stat-key">Word Count</div>
+          </div>
+          <div class="summary-stat-box">
+            <div class="summary-stat-val" id="summarySkillCount">-</div>
+            <div class="summary-stat-key">Skills Detected</div>
+          </div>
+          <div class="summary-stat-box">
+            <div class="summary-stat-val" id="summaryCharCount">-</div>
+            <div class="summary-stat-key">Total Characters</div>
+          </div>
+        </div>
+
+        <div class="insights-subheading">Detected Resume Sections</div>
+        <div class="section-badges" id="summarySections"></div>
+
+        <div class="insights-subheading" style="margin-top: 1.5rem;">Identified Technical Skills</div>
+        <div class="keywords" id="summarySkills"></div>
+      </div>
+
+    </section>
+
+    <!-- ── "How It Works" Section ───────────────────────────────────────────── -->
+    <section class="explainer-section" id="how-it-works">
+      <div class="explainer-header">
+        <div class="section-eyebrow">Algorithmic Architecture</div>
+        <h2>How ResumeFit Analyzes Your Resume</h2>
+        <p>Built with robust natural language processing and vector space geometry — zero hallucination, pure mathematical scoring.</p>
+      </div>
+
+      <div class="explainer-grid">
+        <div class="explainer-card">
+          <div class="exp-icon-box">📄</div>
+          <h3>In-Memory PDF Parsing</h3>
+          <p>Extracts text page-by-page directly in memory via <code>pypdf</code>. Your documents are never permanently stored on server disk.</p>
+        </div>
+
+        <div class="explainer-card">
+          <div class="exp-icon-box">🧹</div>
+          <h3>Text Preprocessing</h3>
+          <p>Normalizes casing, strips non-alphabetical punctuation, and removes high-frequency English stopwords to isolate domain signals.</p>
+        </div>
+
+        <div class="explainer-card">
+          <div class="exp-icon-box">📐</div>
+          <h3>TF-IDF Vectorization</h3>
+          <p>Weights terms based on Term Frequency and Inverse Document Frequency, magnifying high-impact domain competencies over common filler words.</p>
+        </div>
+
+        <div class="explainer-card">
+          <div class="exp-icon-box">🌐</div>
+          <h3>Cosine Similarity Metric</h3>
+          <p>Computes the geometric cosine of the angle between resume and JD multidimensional vectors, providing length-independent matching.</p>
+        </div>
+
+        <div class="explainer-card">
+          <div class="exp-icon-box">🔍</div>
+          <h3>Keyword Gap Analysis</h3>
+          <p>Performs set-theoretic differential analysis to spotlight critical qualifications present in the JD but missing in your resume.</p>
+        </div>
+
+        <div class="explainer-card">
+          <div class="exp-icon-box">💡</div>
+          <h3>Heuristic Recommendations</h3>
+          <p>Synthesizes structural section coverage, score thresholds, and missing skills into actionable suggestions to optimize ATS pass rates.</p>
+        </div>
+      </div>
+    </section>
 
   </div>
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <!-- ── How it works ───────────────────────────────────────────────────── -->
-  <div class="explainer">
-    <h2>KESE KAAM KRTA HAU YEH</h2>
-    <div class="exp-grid">
-      <div class="exp-card">
-        <div class="exp-icon">📄</div>
-        <h3>PDF Upload</h3>
-        <p>Upload a PDF resume. pypdf extracts text page-by-page on the server — no disk storage, pure in-memory processing.</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">🧹</div>
-        <h3>Preprocessing</h3>
-        <p>Text is lowercased, special characters removed, and stopwords filtered — leaving only meaningful domain terms.</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">📊</div>
-        <h3>TF-IDF Vectorization</h3>
-        <p>Each word gets a weight: high for rare, important words like "Kubernetes"; near-zero for common words like "the".</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">📐</div>
-        <h3>Cosine Similarity</h3>
-        <p>Measures the angle between the resume vector and JD vector — 0° = perfect match, 90° = no overlap. Length-independent.</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">❌</div>
-        <h3>Keyword Gap Analysis</h3>
-        <p>Keywords present in the JD but absent from the resume are flagged as missing — your skill gap at a glance.</p>
-      </div>
-      <div class="exp-card">
-        <div class="exp-icon">💡</div>
-        <h3>Smart Suggestions</h3>
-        <p>Contextual, actionable tips generated from your score, missing keywords, and resume structure analysis.</p>
+  <!-- ── SaaS Footer ───────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="app-wrapper">
+      <div class="footer-content">
+        <div class="footer-brand-info">
+          <strong>ResumeFit · AI Resume Intelligence</strong>
+          <span class="footer-copy">Natural Language Processing Resume Scoring &amp; Gap Analysis</span>
+        </div>
+        <div class="footer-tags">
+          <span class="footer-tech-tag">Python</span>
+          <span class="footer-tech-tag">scikit-learn</span>
+          <span class="footer-tech-tag">pypdf</span>
+          <span class="footer-tech-tag">Flask</span>
+          <span class="footer-tech-tag">TF-IDF &amp; Cosine</span>
+        </div>
       </div>
     </div>
-  </div>
+  </footer>
 
-  <footer>Built with Python · scikit-learn · pypdf · Flask · Deployed on Render</footer>
-
-</div>
-
-<!-- External JS — loaded at bottom so DOM is ready -->
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+  <!-- Production Client Script -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-</html>  
+</html>
